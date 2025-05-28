@@ -1,60 +1,86 @@
 package com.example.demo.login.controller;
 
+import com.example.demo.login.dto.KakaoLogoutRes;
+import com.example.demo.login.dto.KakaoUserInfo;
 import com.example.demo.login.service.KakaoLoginService;
-import com.example.demo.provider.JwtProvider;
-import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
+import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
 @Slf4j
 @RequiredArgsConstructor
 public class LoginController {
-    Dotenv dotenv = Dotenv.configure().load();
-    String clientId = dotenv.get("KAKAO");
+    // 키나 redirecturi는 바뀔수 있으므로 형상관리
+    @Value("${kakao.client-id}")
+    private String clientId;
+    @Value("${kakao.redirect-uri}")
+    private String redirectUri;
+    @Value("${kakao.redirect-broswer-uri}")
+    private String redirectBroswerUri;
+
     private final KakaoLoginService kakaoLoginService;
-    @GetMapping("/authorize")
-    public void redirectToKakaoAuth(HttpServletResponse response) throws IOException {
+//    @GetMapping("/authorize")
+//    public void redirectToKakaoAuth(HttpServletResponse response) throws IOException {
+//
+//        String kakaoAuthUrl = "https://kauth.kakao.com/oauth/authorize"
+//                + "?client_id=" + clientId
+//                + "&redirect_uri=" + redirectUri
+//                + "&response_type=code";
+//
+//        response.sendRedirect(kakaoAuthUrl);
+//    }
 
-        String redirectUri = URLEncoder.encode("http://localhost:8090/oauth2/callback/kakao", StandardCharsets.UTF_8);
+    @PostMapping("/kakao")
+    public ResponseEntity<Map<String,Object>> loginWithKakao(
+            @RequestBody Map<String,String> body,
+            HttpServletResponse servletResponse
+    ) {
+        String code = body.get("code");
+        log.debug(code);
+        // 프론트로부터 인가 코드 받아서 토큰 받아온 후 유저 정보까지 받아오는 로직 여기서 실행함
+        KakaoUserInfo info = kakaoLoginService.handleKakaoLogin(code);
 
-        String kakaoAuthUrl = "https://kauth.kakao.com/oauth/authorize"
-                + "?client_id=" + clientId
-                + "&redirect_uri=" + redirectUri
-                + "&response_type=code";
-
-        response.sendRedirect(kakaoAuthUrl);
+        // 받아온 refreshtoken을 쿠키로 보냄
+        Cookie cookie = new Cookie("refreshToken", info.getRefreshToken());
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge((int) info.getRefreshTokenExpiresIn());
+        servletResponse.addCookie(cookie);
+        //받아온 accessToken은 authorization 헤더에 집어넣음
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(info.getAccessToken());
+        // 나머지 정보는 json 형식으로 파싱함
+        Map<String,Object> result = new HashMap<>();
+        result.put("email",       info.getEmail());
+        result.put("nickname",    info.getNickname());
+        return ResponseEntity
+                .ok()
+                .headers(headers)
+                .body(result);
     }
 
-    @GetMapping("/oauth2/callback/kakao")
-    public void kakaoCallback(@RequestParam String code, HttpServletResponse servletResponse) throws IOException {
-        log.info(code);
-        // 3. JWT 발급
-        String jwt = kakaoLoginService.handleKakaoLogin(code);
+    @PostMapping("/logout")
+    public ResponseEntity<?> kakaoLogout(@RequestHeader("Authorization") String authorization, HttpServletResponse response) {
+        // 로그아웃 요청 함
+        KakaoLogoutRes result =  kakaoLoginService.handleKakaoLogout(authorization, response);
+        // 응답은 KakaoLogoutRes dto 참고
+        return ResponseEntity.ok(result);
+    }
 
-        Cookie cookie = new Cookie("token", jwt);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true); // HTTPS 환경에서만 동작
-        cookie.setPath("/");
-        cookie.setMaxAge(60 * 60 * 2);
-        servletResponse.addCookie(cookie);
-
-        // 4. 리디렉션
-        servletResponse.sendRedirect("http://localhost:3000");
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
+        return kakaoLoginService.refreshToken(request, response);
     }
 }

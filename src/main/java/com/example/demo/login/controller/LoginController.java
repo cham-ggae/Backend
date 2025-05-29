@@ -17,30 +17,39 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 로그인 관련 컨트롤러.
+ *
+ * <p>카카오 로그인, 로그아웃, 액세스 토큰 갱신 API 엔드포인트를 제공한다.
+ */
 @RestController
 @Slf4j
 @RequiredArgsConstructor
 public class LoginController {
-    // 키나 redirecturi는 바뀔수 있으므로 형상관리
+
+    private final KakaoLoginService kakaoLoginService;
+
     @Value("${kakao.client-id}")
     private String clientId;
     @Value("${kakao.redirect-uri}")
     private String redirectUri;
-    @Value("${kakao.redirect-broswer-uri}")
-    private String redirectBroswerUri;
+    @GetMapping("/authorize")
+    public void redirectToKakaoAuth(HttpServletResponse response) throws IOException {
 
-    private final KakaoLoginService kakaoLoginService;
-//    @GetMapping("/authorize")
-//    public void redirectToKakaoAuth(HttpServletResponse response) throws IOException {
-//
-//        String kakaoAuthUrl = "https://kauth.kakao.com/oauth/authorize"
-//                + "?client_id=" + clientId
-//                + "&redirect_uri=" + redirectUri
-//                + "&response_type=code";
-//
-//        response.sendRedirect(kakaoAuthUrl);
-//    }
+        String kakaoAuthUrl = "https://kauth.kakao.com/oauth/authorize"
+                + "?client_id=" + clientId
+                + "&redirect_uri=" + redirectUri
+                + "&response_type=code";
 
+        response.sendRedirect(kakaoAuthUrl);
+    }
+    /**
+     * 카카오 로그인 요청 처리.
+     *
+     * @param body            JSON으로 전달된 인가 코드 ({@code {"code":"..."}})
+     * @param servletResponse 리프레시 토큰을 쿠키에 담기 위한 응답 객체
+     * @return 이메일, 닉네임과 함께 Authorization 헤더에 액세스 토큰이 설정된 응답
+     */
     @PostMapping("/kakao")
     public ResponseEntity<Map<String,Object>> loginWithKakao(
             @RequestBody Map<String,String> body,
@@ -71,6 +80,13 @@ public class LoginController {
                 .body(result);
     }
 
+    /**
+     * 카카오 로그아웃 요청 처리.
+     *
+     * @param authorization Authorization 헤더에 담긴 액세스 토큰
+     * @param response      로그아웃 시 쿠키 삭제 등을 위한 응답 객체
+     * @return 로그아웃 결과를 담은 {@link KakaoLogoutRes} DTO
+     */
     @PostMapping("/logout")
     public ResponseEntity<?> kakaoLogout(@RequestHeader("Authorization") String authorization, HttpServletResponse response) {
         // 로그아웃 요청 함

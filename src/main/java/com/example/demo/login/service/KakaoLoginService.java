@@ -17,16 +17,31 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
 
+/**
+ * 카카오 로그인, 로그아웃, 토큰 갱신 기능을 제공하는 서비스.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class KakaoLoginService implements KakaoLogin {
+    /** JWT 토큰 발급 및 검증 제공자 */
     private final JwtProvider jwtProvider;
+    /** 카카오 API 호출용 RestTemplate */
     private final RestTemplate restTemplate;
+    /** 카카오 API 클라이언트 ID (형상관리) */
     @Value("${kakao.client-id}")
     private String clientId;
+    /** 카카오 인가 코드 콜백 URI */
     @Value("${kakao.redirect-uri}")
     private String redirectUri;
+
+    /**
+     * 카카오 인가 코드를 사용해 액세스 토큰과 리프레시 토큰을 요청하고,
+     * 사용자 정보를 조회하여 {@link KakaoUserInfo}에 담아 반환.
+     *
+     * @param code 카카오 인가 코드
+     * @return 사용자 이메일, 닉네임 및 토큰 정보를 포함한 DTO
+     */
     @Override
     public KakaoUserInfo handleKakaoLogin(String code) {
         // 1. access_token 요청
@@ -48,12 +63,12 @@ public class KakaoLoginService implements KakaoLogin {
                 Map.class
         );
 
-        // 인가 코드 가지고 accessToken이랑 refreshToken refreshToken 만료 시간을 kakao auth server로부터 받아옴
+        //  카카오 인증 서버로부터 토큰 응답 수신
         String accessToken = (String) response.getBody().get("access_token");
         String refreshToken = (String) response.getBody().get("refresh_token");
         Long refreshExpiresIn = ((Number) response.getBody().get("refresh_token_expires_in")).longValue();
 
-        // 받아온 토큰 가지고 유저 정보 가져옴
+        // 액세스 토큰으로 사용자 정보 조회
         HttpHeaders userInfoHeaders = new HttpHeaders();
         userInfoHeaders.setBearerAuth(accessToken);
         HttpEntity<?> userInfoRequest = new HttpEntity<>(userInfoHeaders);
@@ -71,7 +86,7 @@ public class KakaoLoginService implements KakaoLogin {
         String email = (String) kakaoAccount.get("email");
         String nickname = (String) kakaoAccount.get("nickname");
 
-        // KakaoUserInfo dto에 맞게 작성 후 컨트롤러에 넘겨줌
+        // 사용자 정보 및 토큰을 DTO로 반환
         return new KakaoUserInfo(email, nickname, accessToken, refreshToken, refreshExpiresIn);
     }
 
@@ -86,7 +101,7 @@ public class KakaoLoginService implements KakaoLogin {
                 request, Map.class
         );
 
-        Cookie tokenCookie = new Cookie("token", null);
+        Cookie tokenCookie = new Cookie("refreshToken", null);
         tokenCookie.setHttpOnly(true);
         tokenCookie.setSecure(true);
         tokenCookie.setPath("/");

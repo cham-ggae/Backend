@@ -1,7 +1,9 @@
 package com.example.demo.login.service;
 
+import com.example.demo.login.dao.UserDao;
 import com.example.demo.login.dto.KakaoLogoutRes;
 import com.example.demo.login.dto.KakaoUserInfo;
+import com.example.demo.login.dto.User;
 import com.example.demo.provider.JwtProvider;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,6 +17,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.sql.SQLException;
 import java.util.Map;
 
 /**
@@ -28,6 +31,7 @@ public class KakaoLoginService implements KakaoLogin {
     private final JwtProvider jwtProvider;
     /** 카카오 API 호출용 RestTemplate */
     private final RestTemplate restTemplate;
+    private final UserDao userDao;
     /** 카카오 API 클라이언트 ID (형상관리) */
     @Value("${kakao.client-id}")
     private String clientId;
@@ -43,7 +47,7 @@ public class KakaoLoginService implements KakaoLogin {
      * @return 사용자 이메일, 닉네임 및 토큰 정보를 포함한 DTO
      */
     @Override
-    public KakaoUserInfo handleKakaoLogin(String code) {
+    public KakaoUserInfo handleKakaoLogin(String code) throws SQLException {
         // 1. access_token 요청
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -86,8 +90,14 @@ public class KakaoLoginService implements KakaoLogin {
         String email = (String) kakaoAccount.get("email");
         String nickname = (String) kakaoAccount.get("nickname");
 
+        User isMember = userDao.findByEmail(email);
+        if (isMember == null) {
+            userDao.joinMembership(email, accessToken, refreshToken);
+        }
+        String newAccessToken = jwtProvider.createAccessToken(email);
+        String newRefreshToken = jwtProvider.createRefreshToken(email);
         // 사용자 정보 및 토큰을 DTO로 반환
-        return new KakaoUserInfo(email, nickname, accessToken, refreshToken, refreshExpiresIn);
+        return new KakaoUserInfo(email, nickname, newAccessToken, newRefreshToken, refreshExpiresIn);
     }
 
     @Override
@@ -130,9 +140,10 @@ public class KakaoLoginService implements KakaoLogin {
         }
 
         String email = jwtProvider.getEmail(refreshToken);
-        String newAccessToken = jwtProvider.createToken(email);
+        String newAccessToken = jwtProvider.createAccessToken(email);
+        String newRefreshToken = jwtProvider.createRefreshToken(email);
 
-        Cookie accessCookie = new Cookie("accessToken", newAccessToken);
+        Cookie accessCookie = new Cookie("refreshToken", newRefreshToken);
         accessCookie.setHttpOnly(true);
         accessCookie.setSecure(true);
         accessCookie.setPath("/");

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.net.URI;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,6 +34,9 @@ public class LoginController {
     private String clientId;
     @Value("${kakao.redirect-uri}")
     private String redirectUri;
+
+    // 리프레시 토큰 만료 기한 14일
+    private static final long REFRESH_VALIDITY = 1000L * 60 * 60 * 24 * 14;
     @GetMapping("/authorize")
     public void redirectToKakaoAuth(HttpServletResponse response) throws IOException {
 
@@ -54,7 +58,7 @@ public class LoginController {
     public ResponseEntity<Map<String,Object>> loginWithKakao(
             @RequestBody Map<String,String> body,
             HttpServletResponse servletResponse
-    ) {
+    ) throws SQLException {
         String code = body.get("code");
         log.debug(code);
         // 프론트로부터 인가 코드 받아서 토큰 받아온 후 유저 정보까지 받아오는 로직 여기서 실행함
@@ -65,7 +69,7 @@ public class LoginController {
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
         cookie.setPath("/");
-        cookie.setMaxAge((int) info.getRefreshTokenExpiresIn());
+        cookie.setMaxAge((int) (REFRESH_VALIDITY / 1000));
         servletResponse.addCookie(cookie);
         //받아온 accessToken은 authorization 헤더에 집어넣음
         HttpHeaders headers = new HttpHeaders();

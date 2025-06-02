@@ -47,7 +47,7 @@ tasks.named('test') {
 }
 
 jar {
-	archiveBaseName.set('app')//빌드 파일명 항상 app.jar
+	archiveBaseName.set('chamggae')//빌드 파일명 항상 chamggae.jar
 	archiveVersion.set('')//빌드 버전 제거
 	archiveClassifier.set('')// classifier도 제거
 }

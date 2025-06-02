@@ -45,3 +45,9 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+jar {
+	archiveBaseName.set('chamggae')//빌드 파일명 항상 chamggae.jar
+	archiveVersion.set('')//빌드 버전 제거
+	archiveClassifier.set('')// classifier도 제거
+}

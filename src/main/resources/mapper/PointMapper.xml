@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- namespace는 패키지 포함한 mapper(DAO interface) 이름으로 설정 한다. -->
+<mapper namespace="com.example.demo.plant.dao.PointDao">
+    <!-- 1. 오늘 이미 해당 활동을 했는지 확인 -->
+    <select id="checkActivityExists" resultType="boolean">
+        SELECT EXISTS (
+        SELECT 1
+        FROM Point_activities
+        WHERE uid = #{uid}
+        AND activity_type = #{type}
+        AND activity_date = CURRENT_DATE
+        )
+    </select>
+    <!-- 2. 활동 내역 추가 -->
+    <insert id="insertActivity">
+        INSERT INTO Point_activities (
+        uid, fid, pid, activity_type, points_earned, activity_date, description, created_at
+        ) VALUES (
+        #{uid}, #{fid}, #{pid}, #{activity_type}, #{points_earned}, #{activity_date}, #{description}, NOW()
+        )
+    </insert>
+    <!-- 3. 현재 경험치 조회 -->
+    <select id="getCurrentExperience" resultType="int">
+        SELECT experience_point
+        FROM Plants
+        WHERE pid = #{pid}
+    </select>
+    <!-- 4. 경험치 업데이트 -->
+    <update id="updateExperience">
+        UPDATE Plants
+        SET experience_point = #{exp}
+        WHERE pid = #{pid}
+    </update>
+    <!-- 5. 레벨업 -->
+    <update id="levelUp">
+        UPDATE Plants
+        SET level = level + 1
+        WHERE pid = #{pid}
+    </update>
+    <!-- 6. 가족 구성원 수 조회 -->
+    <select id="getFamilyMemberCount" resultType="int">
+        SELECT COUNT(*)
+        FROM Users
+        WHERE fid = #{fid}
+    </select>
+
+    <!-- 7. 사용자 ID → 가족 공간 ID 조회 -->
+    <select id="getFamilyIdByUid" resultType="long">
+        SELECT fid
+        FROM Users
+        WHERE uid = #{uid}
+    </select>
+    <!-- 8. 가족 공간 ID → 가장 최근 식물 ID 조회 -->
+    <select id="getPlantIdByFid" resultType="long">
+        SELECT pid
+        FROM Plants
+        WHERE fid = #{fid}
+        ORDER BY created_at DESC
+        LIMIT 1
+    </select>
+    <!-- 9. 식물 레벨 조회 -->
+    <select id="getPlantLevel" resultType="int">
+        SELECT level
+        FROM Plants
+        WHERE pid = #{pid}
+    </select>
+</mapper>

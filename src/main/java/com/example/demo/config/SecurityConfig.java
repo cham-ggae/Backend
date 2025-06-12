@@ -1,6 +1,7 @@
 package com.example.demo.config;
 
 import com.example.demo.provider.JwtFilter;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,8 +30,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/authorize", "/oauth2/callback/kakao", "/logout", "/kakao").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/authorize", "/oauth2/callback/kakao", "/logout", "/kakao", "/swagger-ui/index.html").permitAll()
+                        .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .formLogin(AbstractHttpConfigurer::disable) // 기본 로그인 페이지 비활성화

@@ -2,7 +2,6 @@ package com.example.demo.family.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 /**
  * 가족 스페이스 생성/참여 응답 DTO
@@ -10,7 +9,6 @@ import lombok.AllArgsConstructor;
  */
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class CreateFamilyResponse {
 
     /**
@@ -29,13 +27,33 @@ public class CreateFamilyResponse {
     private FamilySpace family;
 
     /**
-     * 성공 응답 생성
+     * 모든 필드를 매개변수로 하는 생성자
+     */
+    public CreateFamilyResponse(boolean success, String message, FamilySpace family) {
+        this.success = success;
+        this.message = message;
+        this.family = family;
+    }
+
+    /**
+     * 성공 응답 생성 (기본 메시지)
      *
      * @param family 가족 스페이스 정보
      * @return 성공 응답 객체
      */
     public static CreateFamilyResponse success(FamilySpace family) {
         return new CreateFamilyResponse(true, "가족 스페이스가 성공적으로 생성되었습니다.", family);
+    }
+
+    /**
+     * 성공 응답 생성 (커스텀 메시지)
+     *
+     * @param family 가족 스페이스 정보
+     * @param message 성공 메시지
+     * @return 성공 응답 객체
+     */
+    public static CreateFamilyResponse success(FamilySpace family, String message) {
+        return new CreateFamilyResponse(true, message, family);
     }
 
     /**

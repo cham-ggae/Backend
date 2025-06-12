@@ -21,7 +21,9 @@ public class FamilyService {
     @Autowired
     private FamilyDao familyDao;
 
+    // ========================================
     // 1. 가족 스페이스 생성
+    // ========================================
 
     /**
      * 새로운 가족 스페이스 생성
@@ -173,7 +175,7 @@ public class FamilyService {
             // 6. 새로운 가족에 참여
             familyDao.updateUserFamilyId(uid, targetFamily.getFid());
 
-            return CreateFamilyResponse.success(targetFamily);
+            return CreateFamilyResponse.success(targetFamily, "가족 스페이스에 성공적으로 참여했습니다.");
 
         } catch (FamilyServiceException e) {
             return CreateFamilyResponse.failure(e.getMessage());

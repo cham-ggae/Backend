@@ -46,7 +46,7 @@ public class FamilySpace {
     /**
      * 새싹 키우기 영양제 수량
      * 가족 활동을 통해 획득하는 영양제 개수
-     * 식물 성장 시스템에서 사용됨
+     * 식물 성장 시스템에서 사용
      */
     private Integer nutrial;
 

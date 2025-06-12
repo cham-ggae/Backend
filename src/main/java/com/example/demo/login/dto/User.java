@@ -17,4 +17,5 @@ public class User {
     private String kakao_accesstoken;
     private String kakao_refreshtoken;
     private String role;
+    private String profile_image;
 }

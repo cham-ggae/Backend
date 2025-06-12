@@ -12,6 +12,9 @@ import java.util.Random;
 
 /**
  * 가족 스페이스 관련 비즈니스 로직 처리 서비스
+ *
+ * @author 참깨라면팀
+ * @since 1.0
  */
 @Service
 @Transactional(readOnly = true)
@@ -334,6 +337,20 @@ public class FamilyService {
         if (remainingMembers == 0) {
             familyDao.deleteFamilySpace(fid);
         }
+    }
+
+    // ========================================
+    // 7. 사용자 가족 정보 조회
+    // ========================================
+
+    /**
+     * 사용자가 현재 속한 가족 ID 조회
+     *
+     * @param uid 사용자 ID
+     * @return 가족 ID (속해있지 않으면 null)
+     */
+    public Integer getUserCurrentFamilyId(Integer uid) {
+        return familyDao.getUserCurrentFamilyId(uid);
     }
 
     // ========================================

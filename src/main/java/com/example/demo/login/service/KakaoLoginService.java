@@ -114,14 +114,6 @@ public class KakaoLoginService implements KakaoLogin {
             ageRange = (String) kakaoAccount.get("age_range");
         }
 
-// 4) 출력해 보기
-        System.out.println("email: " + email);
-        System.out.println("nickname: " + nickname);
-        System.out.println("profileImageUrl: " + profileImageUrl);
-        System.out.println("thumbnailUrl: " + thumbnailUrl);
-        System.out.println("gender: " + gender);
-        System.out.println("ageRange: " + ageRange);
-        System.out.println(kakaoAccount);
         User isMember = userDao.findByEmail(email);
         if (isMember == null) {
             userDao.joinMembership(email, accessToken, refreshToken, gender, ageRange, nickname, profileImageUrl);

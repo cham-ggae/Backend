@@ -88,11 +88,35 @@ public class KakaoLoginService implements KakaoLogin {
         Map<String, Object> kakaoAccount = (Map<String, Object>) userInfo.get("kakao_account");
         // 받아온 유저 정보들
         String email = (String) kakaoAccount.get("email");
-        String nickname = (String) kakaoAccount.get("nickname");
+        Map<String, Object> profileMap = (Map<String, Object>) kakaoAccount.get("profile");
+
+        String nickname = null;
+        String profileImageUrl = null;
+        String thumbnailUrl = null;
+
+        if (profileMap != null) {
+            nickname       = (String) profileMap.get("nickname");
+            profileImageUrl = (String) profileMap.get("profile_image_url");
+            thumbnailUrl    = (String) profileMap.get("thumbnail_image_url");
+        }
+
+// 3) optional 필드: 동의 여부 체크 후 파싱
+        String gender    = null;
+        String ageRange  = null;
+
+        Boolean hasGender    = (Boolean) kakaoAccount.getOrDefault("has_gender", false);
+        Boolean hasAgeRange  = (Boolean) kakaoAccount.getOrDefault("has_age_range", false);
+
+        if (hasGender) {
+            gender = (String) kakaoAccount.get("gender");
+        }
+        if (hasAgeRange) {
+            ageRange = (String) kakaoAccount.get("age_range");
+        }
 
         User isMember = userDao.findByEmail(email);
         if (isMember == null) {
-            userDao.joinMembership(email, accessToken, refreshToken);
+            userDao.joinMembership(email, accessToken, refreshToken, gender, ageRange, nickname, profileImageUrl);
         }
         String newAccessToken = jwtProvider.createAccessToken(email);
         String newRefreshToken = jwtProvider.createRefreshToken(email);

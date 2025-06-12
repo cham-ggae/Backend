@@ -19,6 +19,7 @@
     </update>
 
     <!-- 2. 가족 스페이스 조회 관련 쿼리 -->
+
     <!-- 가족 스페이스 기본 정보 조회 -->
     <select id="getFamilySpaceById" parameterType="int" resultType="com.example.demo.family.dto.FamilySpace">
         SELECT fid, name, invite_code as inviteCode, combi_type as combiType, nutrial, created_at as createdAt
@@ -58,7 +59,15 @@
         WHERE fid = #{fid}
     </select>
 
-    <!-- 3. 가족 참여/탈퇴 관련 쿼리 -->
+    <!-- 3. 사용자 상태 확인 관련 쿼리 -->
+
+    <!-- 사용자 존재 여부 확인 -->
+    <select id="isUserExists" parameterType="int" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM Users
+        WHERE uid = #{uid}
+    </select>
+
     <!-- 사용자가 이미 다른 가족에 속해있는지 확인 -->
     <select id="getUserCurrentFamilyId" parameterType="int" resultType="java.lang.Integer">
         SELECT fid
@@ -81,6 +90,7 @@
     </update>
 
     <!-- 4. 초대 코드 관련 쿼리 -->
+
     <!-- 초대 코드 중복 확인 -->
     <select id="isInviteCodeExists" parameterType="string" resultType="boolean">
         SELECT COUNT(*) > 0
@@ -96,6 +106,7 @@
     </update>
 
     <!-- 5. 가족 스페이스 관리 쿼리 -->
+
     <!-- 가족 스페이스 이름 변경 -->
     <update id="updateFamilyName">
         UPDATE Family_space
@@ -117,6 +128,7 @@
     </delete>
 
     <!-- 6. 기본 통계 쿼리 (추후 할인 계산 확장용) -->
+
     <!-- 가족 구성원 기본 통계 조회 -->
     <select id="getFamilyBasicStats" parameterType="int" resultType="map">
         SELECT

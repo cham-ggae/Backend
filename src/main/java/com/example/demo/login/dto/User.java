@@ -1,10 +1,8 @@
 package com.example.demo.login.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@AllArgsConstructor
 public class User {
     private Long uid;
     private Long fid;

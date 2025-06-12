@@ -13,8 +13,6 @@ import java.util.Random;
 /**
  * 가족 스페이스 관련 비즈니스 로직 처리 서비스
  *
- * @author 참깨라면팀
- * @since 1.0
  */
 @Service
 @Transactional(readOnly = true)
@@ -23,9 +21,7 @@ public class FamilyService {
     @Autowired
     private FamilyDao familyDao;
 
-    // ========================================
     // 1. 가족 스페이스 생성
-    // ========================================
 
     /**
      * 새로운 가족 스페이스 생성
@@ -37,16 +33,21 @@ public class FamilyService {
     @Transactional
     public CreateFamilyResponse createFamilySpace(Integer uid, CreateFamilyRequest request) {
         try {
-            // 1. 입력값 검증
+            // 1. 사용자 존재 여부 검증 (버그 수정)
+            if (!familyDao.isUserExists(uid)) {
+                throw new FamilyServiceException("존재하지 않는 사용자입니다. (사용자 ID: " + uid + ")");
+            }
+
+            // 2. 입력값 검증
             validateCreateFamilyRequest(request);
 
-            // 2. 사용자가 이미 다른 가족에 속해있다면 탈퇴 처리
+            // 3. 사용자가 이미 다른 가족에 속해있다면 탈퇴 처리
             handleExistingFamily(uid);
 
-            // 3. 고유한 초대 코드 생성
+            // 4. 고유한 초대 코드 생성
             String inviteCode = generateUniqueInviteCode();
 
-            // 4. 새로운 가족 스페이스 생성
+            // 5. 새로운 가족 스페이스 생성
             FamilySpace newFamily = new FamilySpace();
             newFamily.setName(request.getName());
             newFamily.setInviteCode(inviteCode);
@@ -55,7 +56,7 @@ public class FamilyService {
 
             familyDao.createFamilySpace(newFamily);
 
-            // 5. 생성자를 가족 구성원으로 추가
+            // 6. 생성자를 가족 구성원으로 추가
             familyDao.updateUserFamilyId(uid, newFamily.getFid());
 
             return CreateFamilyResponse.success(newFamily);
@@ -132,9 +133,7 @@ public class FamilyService {
         return code.toString();
     }
 
-    // ========================================
     // 2. 가족 참여 (초대 코드로 조인)
-    // ========================================
 
     /**
      * 초대 코드를 통한 가족 참여
@@ -146,27 +145,32 @@ public class FamilyService {
     @Transactional
     public CreateFamilyResponse joinFamilySpace(Integer uid, String inviteCode) {
         try {
-            // 1. 초대 코드 검증
+            // 1. 사용자 존재 여부 검증 (버그 수정)
+            if (!familyDao.isUserExists(uid)) {
+                throw new FamilyServiceException("존재하지 않는 사용자입니다. (사용자 ID: " + uid + ")");
+            }
+
+            // 2. 초대 코드 검증
             FamilySpace targetFamily = familyDao.getFamilySpaceByInviteCode(inviteCode);
             if (targetFamily == null) {
                 throw new FamilyServiceException("유효하지 않은 초대 코드입니다.");
             }
 
-            // 2. 가족 구성원 수 제한 체크 (최대 5명)
+            // 3. 가족 구성원 수 제한 체크 (최대 5명)
             int currentMemberCount = familyDao.getFamilyMemberCount(targetFamily.getFid());
             if (currentMemberCount >= 5) {
                 throw new FamilyServiceException("가족 구성원은 최대 5명까지 가능합니다.");
             }
 
-            // 3. 이미 해당 가족의 구성원인지 체크
+            // 4. 이미 해당 가족의 구성원인지 체크
             if (familyDao.isUserFamilyMember(uid, targetFamily.getFid())) {
                 throw new FamilyServiceException("이미 해당 가족의 구성원입니다.");
             }
 
-            // 4. 기존 가족에서 탈퇴 처리
+            // 5. 기존 가족에서 탈퇴 처리
             handleExistingFamily(uid);
 
-            // 5. 새로운 가족에 참여
+            // 6. 새로운 가족에 참여
             familyDao.updateUserFamilyId(uid, targetFamily.getFid());
 
             return CreateFamilyResponse.success(targetFamily);
@@ -178,9 +182,7 @@ public class FamilyService {
         }
     }
 
-    // ========================================
     // 3. 가족 대시보드 정보 조회
-    // ========================================
 
     /**
      * 가족 스페이스 대시보드 정보 조회
@@ -212,9 +214,15 @@ public class FamilyService {
     }
 
     /**
-     * 사용자가 해당 가족의 구성원인지 검증
+     * 사용자가 해당 가족의 구성원인지 검증 + 사용자 존재 여부 검증
      */
     private void validateFamilyMember(Integer uid, Integer fid) {
+        // 사용자 존재 여부 확인
+        if (!familyDao.isUserExists(uid)) {
+            throw new FamilyServiceException("존재하지 않는 사용자입니다. (사용자 ID: " + uid + ")");
+        }
+
+        // 가족 구성원 여부 확인
         if (!familyDao.isUserFamilyMember(uid, fid)) {
             throw new FamilyAccessDeniedException("해당 가족의 구성원이 아닙니다.");
         }
@@ -258,9 +266,7 @@ public class FamilyService {
         return new DiscountInfo(totalDiscount, description, memberCount);
     }
 
-    // ========================================
     // 4. 초대 코드 관련
-    // ========================================
 
     /**
      * 초대 코드 유효성 검증
@@ -314,9 +320,7 @@ public class FamilyService {
         return newInviteCode;
     }
 
-    // ========================================
     // 5. 가족 탈퇴
-    // ========================================
 
     /**
      * 가족에서 나가기
@@ -339,9 +343,7 @@ public class FamilyService {
         }
     }
 
-    // ========================================
     // 7. 사용자 가족 정보 조회
-    // ========================================
 
     /**
      * 사용자가 현재 속한 가족 ID 조회
@@ -350,12 +352,15 @@ public class FamilyService {
      * @return 가족 ID (속해있지 않으면 null)
      */
     public Integer getUserCurrentFamilyId(Integer uid) {
+        // 사용자 존재 여부 확인
+        if (!familyDao.isUserExists(uid)) {
+            throw new FamilyServiceException("존재하지 않는 사용자입니다. (사용자 ID: " + uid + ")");
+        }
+
         return familyDao.getUserCurrentFamilyId(uid);
     }
 
-    // ========================================
     // 6. 예외 클래스 정의
-    // ========================================
 
     /**
      * 가족 서비스 관련 비즈니스 예외

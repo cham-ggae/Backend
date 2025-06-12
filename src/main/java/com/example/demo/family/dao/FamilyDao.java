@@ -11,11 +11,14 @@ import java.util.Map;
 /**
  * 가족 스페이스 관련 데이터베이스 접근 인터페이스
  * Family.xml MyBatis 매퍼와 연동
+ *
  */
 @Mapper
 public interface FamilyDao {
 
+    // ========================================
     // 1. 가족 스페이스 생성 관련
+    // ========================================
 
     /**
      * 새로운 가족 스페이스 생성
@@ -36,7 +39,9 @@ public interface FamilyDao {
      */
     int updateUserFamilyId(@Param("uid") Integer uid, @Param("fid") Integer fid);
 
+    // ========================================
     // 2. 가족 스페이스 조회 관련
+    // ========================================
 
     /**
      * 가족 스페이스 ID로 기본 정보 조회
@@ -74,6 +79,15 @@ public interface FamilyDao {
     int getFamilyMemberCount(@Param("fid") Integer fid);
 
     // 3. 사용자 상태 확인 관련
+
+    /**
+     * 사용자 존재 여부 확인
+     * 가족 생성/참여 전 사용자 유효성 검증
+     *
+     * @param uid 사용자 ID
+     * @return 사용자가 존재하면 true, 없으면 false
+     */
+    boolean isUserExists(@Param("uid") Integer uid);
 
     /**
      * 사용자가 현재 속한 가족 ID 조회

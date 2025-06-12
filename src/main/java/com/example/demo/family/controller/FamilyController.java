@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
  * @since 1.0
  */
 @RestController
-@RequestMapping("/api/family-space")
+@RequestMapping("/family-space")
 @Tag(name = "Family Space", description = "가족 스페이스 관리 API")
 public class FamilyController {
 

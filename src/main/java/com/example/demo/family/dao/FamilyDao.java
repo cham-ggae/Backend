@@ -154,9 +154,7 @@ public interface FamilyDao {
      */
     int deleteFamilySpace(@Param("fid") Integer fid);
 
-    // ========================================
     // 6. 통계 및 기타 정보 조회
-    // ========================================
 
     /**
      * 가족 기본 통계 정보 조회

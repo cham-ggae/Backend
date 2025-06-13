@@ -13,7 +13,7 @@ public class JwtProvider {
     static Dotenv dotenv = Dotenv.configure().load();
 
     private static final String secret = dotenv.get("jwtKey"); // dotenv로 빼도 됨
-    // 액세스 토큰: 2시간
+    // 액세스 토큰: 10분
 //    private static final long ACCESS_VALIDITY  = 1000L * 60 * 60 * 2;
     private static final long ACCESS_VALIDITY  = 1000L * 60 * 10;
     // 리프레시 토큰: 14일

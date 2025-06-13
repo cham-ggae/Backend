@@ -4,6 +4,5 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 @Mapper
-public interface surveyMapper {
-    void surveyResult(@Param("userId") int userId, @Param("bugId") int bugId);
-}
+public interface SurveyMapper {
+    void surveyResult(@Param("userId") int userId, @Param("bugId") int bugId);}

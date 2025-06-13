@@ -10,7 +10,7 @@ public class User {
     private Long bug_id;
     private String name;
     private String email;
-    private Long age;
+    private String age;
     private String gender;
     private String survey_date;
     private String join_date;

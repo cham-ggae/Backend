@@ -33,18 +33,22 @@ public class VoiceServiceImpl implements VoiceService {
             // 2. uid 조회
 //            int uid = userDao.findByEmail(email).getUid().intValue();
 
-            // 3. STT 처리
-            byte[] audioBytes = file.getBytes(); // IOException 발생 가능
-            String text = googleSttService.transcribe(audioBytes);
+            // 3. 파일을 GCS에 업로드하고 URI 얻기
+            String gcsUri = googleSttService.uploadFileToGCS(file);
 
-            // 4. 챗봇 연동 및 DB 저장
-//            voiceDao.insertChat(uid, "USER", text, sessionId);
-//            String botResponse = chatbotService.askOnce(text);
-//            voiceDao.insertChat(uid, "BOT", botResponse, sessionId);
+            // 4. GCS 기반 STT 처리 → 텍스트 반환
+            String text = googleSttService.transcribeAudio(gcsUri);
 
+
+            // 5. 챗봇에 질문 전달 (응답 db에 저장하는건 아직 구현 안함)
+            chatbotService.streamChatting(text, partial -> {
+                // 응답 스트리밍 콜백 – 지금은 무시하거나, log만 찍기
+                System.out.println("[챗봇 응답 일부]: " + partial);
+            });
+
+            // 6. 사용자 질문만 응답에 담아 리턴
             return new TranscribedTextResponse(true,
                     new TranscribedTextResponse.Data(text, "msg_session_" + sessionId));
-
         } catch (IOException e) {
             throw new RuntimeException("음성 파일 처리 중 오류가 발생했습니다.", e);
 //        } catch (SQLException e) {

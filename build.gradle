@@ -43,6 +43,7 @@ dependencies {
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
 	implementation 'com.google.cloud:google-cloud-speech:4.32.0'
 	implementation 'com.google.protobuf:protobuf-java:3.25.1'
+	implementation 'com.google.cloud:google-cloud-storage:2.38.0'
 
 }
 

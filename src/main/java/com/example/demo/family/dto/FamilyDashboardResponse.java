@@ -28,4 +28,19 @@ public class FamilyDashboardResponse {
      * 할인 정보
      */
     private DiscountInfo discount;
+
+    /**
+     * 편의 메서드: 총 구성원 수
+     */
+    public int getTotalMembers() {
+        return members != null ? members.size() : 0;
+    }
+
+
+    /**
+     * 편의 메서드: 요금제 가입 구성원 수
+     */
+    public long getMembersWithPlan() {
+        return members != null ? members.stream().filter(FamilyMember::hasPlan).count() : 0;
+    }
 }

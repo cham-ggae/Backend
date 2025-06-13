@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * 가족 구성원 정보 DTO
  * Users 테이블과 Plans 테이블을 LEFT JOIN한 결과와 매핑
  * 가족 스페이스 대시보드에서 구성원 정보 표시에 사용
- *
+ * Long 타입으로 통일
  */
 @Data
 @NoArgsConstructor
@@ -20,7 +20,7 @@ public class FamilyMember {
      * 사용자 고유 ID (Primary Key)
      * Users.uid와 매핑
      */
-    private Integer uid;
+    private Long uid;
 
     /**
      * 사용자 이름
@@ -89,8 +89,14 @@ public class FamilyMember {
      */
     private String dataUsage;
 
-    // 사용자 정보만 있는 생성자
-    public FamilyMember(Integer uid, String name, Integer age, String gender, LocalDateTime joinDate) {
+    /**
+     * 프로필 이미지 URL (추가)
+     * 카카오 로그인에서 제공되는 프로필 이미지
+     */
+    private String profileImage;
+
+    // 생성자들
+    public FamilyMember(Long uid, String name, Integer age, String gender, LocalDateTime joinDate) {
         this.uid = uid;
         this.name = name;
         this.age = age;
@@ -114,6 +120,6 @@ public class FamilyMember {
         if (!hasPlan()) {
             return "요금제 없음";
         }
-        return planName + " (월 " + price + "원)";
+        return planName + " (월 " + String.format("%,d", price) + "원)";
     }
 }

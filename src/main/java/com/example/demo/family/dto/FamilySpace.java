@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 /**
  * 가족 스페이스 기본 정보 DTO
  * Family_space 테이블과 매핑되는 엔티티
- *
+ * Long 타입으로 통일
  */
 @Data
 @NoArgsConstructor
@@ -19,7 +19,7 @@ public class FamilySpace {
      * 가족 스페이스 고유 ID (Primary Key)
      * Family_space.fid와 매핑
      */
-    private Integer fid;
+    private Long fid;
 
     /**
      * 가족 스페이스 이름
@@ -31,7 +31,7 @@ public class FamilySpace {
     /**
      * 가족 초대 코드
      * 가족 구성원 초대 시 사용하는 고유 코드
-     * 영문 대문자 + 숫자 조합으로 생성 (예: "MODI2024")
+     * 영문 대문자 + 숫자 조합으로 생성 (예: "A1B2C3")
      * 고정 6자리
      */
     private String inviteCode;
@@ -39,7 +39,7 @@ public class FamilySpace {
     /**
      * 가족 결합 상품 타입
      * 할인 계산에 사용되는 결합 상품 종류
-     * 가능한 값: "투게더 결합", "참쉬운 가족 결합", "가족 무한 사랑",
+     * 가능한 값: "투게더 결합", "참쉬운 가족 결합", "가족 무한 사랑", "참 쉬운 케이블 가족 결합"
      */
     private String combiType;
 
@@ -55,4 +55,12 @@ public class FamilySpace {
      * 자동으로 현재 시간이 설정됨 (NOW())
      */
     private LocalDateTime createdAt;
+
+    /**
+     * 편의 메서드: 가족 생성 후 경과 일수 계산
+     */
+    public long getDaysAfterCreation() {
+        if (createdAt == null) return 0;
+        return java.time.Duration.between(createdAt, LocalDateTime.now()).toDays();
+    }
 }

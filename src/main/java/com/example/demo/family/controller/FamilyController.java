@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
  *
  */
 @RestController
-@RequestMapping("/family-space")
+@RequestMapping("/family")
 @Tag(name = "Family Space", description = "가족 스페이스 관리 API")
 public class FamilyController {
 
@@ -180,7 +180,7 @@ public class FamilyController {
      * 초대 코드 유효성 검증
      * 인증 없이도 호출 가능 (가족 정보 미리보기용)
      */
-    @GetMapping("/invite/{inviteCode}/validate")
+    @GetMapping("/invite/{inviteCode}")
     @Operation(
             summary = "초대 코드 검증",
             description = "초대 코드의 유효성을 검증하고 가족 정보를 반환합니다. 인증 없이도 호출 가능합니다."
@@ -212,7 +212,7 @@ public class FamilyController {
      * 새로운 초대 코드 생성
      * 가족 구성원만 초대 코드를 갱신할 수 있음
      */
-    @PostMapping("/{fid}/invite-code")
+    @PostMapping("/{fid}")
     @Operation(
             summary = "새 초대 코드 생성",
             description = "기존 초대 코드를 새로운 코드로 갱신합니다. 해당 가족의 구성원만 실행 가능합니다."
@@ -256,7 +256,7 @@ public class FamilyController {
      * 가족 스페이스에서 나가기
      * 마지막 구성원인 경우 가족 스페이스가 자동으로 삭제됨
      */
-    @DeleteMapping("/{fid}/leave")
+    @DeleteMapping("/{fid}")
     @Operation(
             summary = "가족 탈퇴",
             description = "현재 가족 스페이스에서 탈퇴합니다. 마지막 구성원인 경우 가족이 삭제됩니다."
@@ -300,7 +300,7 @@ public class FamilyController {
      * 현재 사용자가 속한 가족 정보 조회
      * JWT 토큰으로 사용자를 식별하여 해당 사용자의 가족 정보를 반환
      */
-    @GetMapping("/my-family")
+    @GetMapping()
     @Operation(
             summary = "내 가족 정보 조회",
             description = "현재 로그인한 사용자가 속한 가족의 기본 정보를 조회합니다."

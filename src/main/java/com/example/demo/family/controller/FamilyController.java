@@ -40,7 +40,7 @@ public class FamilyController {
     @PostMapping
     @Operation(
             summary = "가족 스페이스 생성",
-            description = "새로운 가족 스페이스를 생성하고 요청자를 첫 번째 구성원으로 등록합니다. JWT 토큰으로 사용자를 식별합니다."
+            description = "새로운 가족 스페이스를 생성하고 요청자를 첫 번째 구성원으로 등록합니다. JWT 토큰으로 사용자를 식별합니다. combitype \"투게더 결합\", \"참쉬운 가족 결합\", \"가족 무한 사랑\", \"참 쉬운 케이블 가족 결합\" "
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "가족 스페이스 생성 성공"),

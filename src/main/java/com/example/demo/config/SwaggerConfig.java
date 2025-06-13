@@ -75,9 +75,9 @@ public class SwaggerConfig {
                     **예시**: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
                     
                     **토큰 획득 방법**:
-                    1. POST /kakao API로 카카오 로그인
-                    2. 응답 헤더의 Authorization에서 토큰 복사
-                    3. 여기에 전체 값 붙여넣기 (Bearer 포함)
+                    1. 프론트 측에서 API로 카카오 로그인
+                    2. 아무 요청 보내고 요청 헤더 정보에 Bearer 토큰 복사
+                    3. 여기에 전체 값 붙여넣기
                     """);
     }
 }

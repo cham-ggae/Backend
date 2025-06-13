@@ -101,7 +101,7 @@ public class FamilyService {
 
         // 결합 상품 타입 유효성 검증
         String[] validCombiTypes = {
-                "투게더 결합", "참쉬운 가족 결합", "가족 무한 사랑", "참 쉬운 케이블 가족 결합"
+                "투게더 결합", "참쉬운 가족 결합"
         };
 
         boolean isValidCombiType = false;

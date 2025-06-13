@@ -1,5 +1,6 @@
 package com.example.demo.surveyResult.service;
 
+import com.example.demo.surveyResult.dto.SurveyResponseDto;
 import com.example.demo.surveyResult.dto.SurveyResultDto;
 import com.example.demo.surveyResult.mapper.SurveyMapper;
 import lombok.RequiredArgsConstructor;
@@ -12,5 +13,9 @@ public class SurveyService {
 
     public void SurveyResult(SurveyResultDto dto){
         surveyMapper.surveyResult(dto.getUserId(), dto.getBugId());
+    }
+
+    public SurveyResponseDto selectedBugId(int bugId){
+        return surveyMapper.selectedBugId(bugId);
     }
 }

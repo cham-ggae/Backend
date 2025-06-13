@@ -9,4 +9,26 @@
         SET bug_id = #{bugId}, survey_date = CURRENT_TIMESTAMP
         WHERE uid = #{userId}
     </insert>
+
+
+    <resultMap id="BugResultMap" type="com.example.demo.surveyResult.dto.SurveyResponseDto">
+        <id property="bugId" column="bug_id"/>
+        <result property="suggest1" column="suggest1"/>
+        <result property="suggest2" column="suggest2"/>
+        <result property="bugName" column="bug_name"/>
+        <result property="feature" column="feature"/>
+        <result property="personality" column="personality"/>
+    </resultMap>
+
+    <select id="selectedBugId" resultMap="BugResultMap">
+        SELECT
+        bug_id,
+        suggest1,
+        suggest2,
+        bug_name,
+        feature,
+        personality
+        FROM Bugs
+        WHERE bug_id = #{bugId}
+    </select>
 </mapper>

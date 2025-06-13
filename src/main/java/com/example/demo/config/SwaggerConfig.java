@@ -33,8 +33,7 @@ public class SwaggerConfig {
         return new OpenAPI()
                 .info(apiInfo())
                 .servers(List.of(
-                        new Server().url("http://localhost:8090").description("로컬 개발 서버"),
-                        new Server().url("https://api.modi.com").description("프로덕션 서버")
+                        new Server().url("http://localhost:8090").description("로컬 개발 서버")
                 ))
                 .components(new Components()
                         .addSecuritySchemes(SECURITY_SCHEME_NAME, createAPIKeyScheme()))
@@ -82,16 +81,3 @@ public class SwaggerConfig {
                     """);
     }
 }
-
-// ========================================
-// 추가: 특정 API에서 인증 제외하는 어노테이션
-// ========================================
-
-/**
- * 특정 API 메서드에서 Swagger 인증 요구사항을 제외하는 어노테이션
- *
- * 사용법:
- * @Operation(summary = "초대 코드 검증")
- * @NoAuth
- * public ResponseEntity<InviteCodeValidationResponse> validateInviteCode(...)
- */

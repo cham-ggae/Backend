@@ -6,6 +6,7 @@ import com.example.demo.plant.websocket.WaterWebSocketHandler;
 import com.example.demo.plant.websocket.dto.WaterEventData;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.TextMessage;
@@ -16,7 +17,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PointService {
@@ -114,11 +115,18 @@ public class PointService {
                         s.sendMessage(new TextMessage(json));
                     }
                 }
+                // (5) 오늘 가족 모두 물 줬는지 검사 → 영양제 +1
+                Date today = Date.valueOf(LocalDate.now());
+                int total = pointDao.getFamilyMemberCount(fid);
+                int watered = pointDao.countWateredMembersToday(fid, today);
+                if (total == watered) {
+                    pointDao.incrementNutrient(fid); // Family_space.nutrial += 1
+                }
+
             } catch (Exception e) {
-                e.printStackTrace();
+                log.warn("WebSocket 에러: {}", e.getMessage());
             }
         }
-
     }
 
     private int getExpThreshold(int memberCount, int level) {

@@ -82,4 +82,17 @@
     <select id="getUserProfile" resultType="string">
         SELECT profile_image FROM Users WHERE uid = #{uid}
     </select>
+    <select id="countWateredMembersToday" resultType="int">
+        SELECT COUNT(DISTINCT uid)
+        FROM Point_activities
+        WHERE fid = #{fid}
+        AND activity_type = 'water'
+        AND activity_date = #{date}
+    </select>
+
+    <update id="incrementNutrient">
+        UPDATE Family_space
+        SET nutrial = nutrial + 1
+        WHERE fid = #{fid}
+    </update>
 </mapper>

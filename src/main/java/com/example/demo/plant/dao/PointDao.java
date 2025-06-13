@@ -37,4 +37,9 @@ public interface PointDao {
 
     String getUserName(@Param("uid") Long uid);
     String getUserProfile(@Param("uid") Long uid);
+
+    // 오늘 물 준 가족 구성원 수
+    int countWateredMembersToday(@Param("fid") Long fid, @Param("date") Date date);
+    // 영양제 +1 처리
+    void incrementNutrient(@Param("fid") Long fid);
 }

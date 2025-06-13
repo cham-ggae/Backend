@@ -67,4 +67,19 @@
         FROM Plants
         WHERE pid = #{pid}
     </select>
+    <!-- 물주기 확인 백업 api-->
+    <select id="getTodayWateredUids" resultType="long">
+        SELECT DISTINCT uid
+        FROM Point_activities
+        WHERE fid = #{fid}
+        AND activity_type = 'water'
+        AND activity_date = #{date}
+    </select>
+    <select id="getUserName" resultType="string">
+        SELECT name FROM Users WHERE uid = #{uid}
+    </select>
+
+    <select id="getUserProfile" resultType="string">
+        SELECT profile_image FROM Users WHERE uid = #{uid}
+    </select>
 </mapper>

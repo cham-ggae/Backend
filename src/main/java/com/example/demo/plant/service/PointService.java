@@ -2,12 +2,19 @@ package com.example.demo.plant.service;
 
 import com.example.demo.plant.dao.PointDao;
 import com.example.demo.plant.dto.AddPointRequestDto;
+import com.example.demo.plant.websocket.WaterWebSocketHandler;
+import com.example.demo.plant.websocket.dto.WaterEventData;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 
+import java.sql.Date;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -83,6 +90,35 @@ public class PointService {
             pointDao.levelUp(pid);
             pointDao.updateExperience(pid, 0); // 경험치 리셋
         }
+
+        // 물주기일 경우 WebSocket 브로드캐스트 전송
+        if (type.equals("water")) {
+            try {
+                // (1) 사용자 이름 및 프로필 이미지 가져오기 (UserDao 추가 필요)
+                String name = pointDao.getUserName(uid);              // Users.name
+                String avatarUrl = pointDao.getUserProfile(uid);      // Users.profile_image
+
+                // (2) DTO 생성
+                WaterEventData event = new WaterEventData();
+                event.setFid(fid);
+                event.setUid(uid);
+                event.setName(name);
+                event.setAvatarUrl(avatarUrl);
+
+                // (3) JSON 변환
+                String json = new ObjectMapper().writeValueAsString(event);
+
+                // (4) WebSocket 세션에 브로드캐스트
+                for (WebSocketSession s : WaterWebSocketHandler.sessions) {
+                    if (s.isOpen()) {
+                        s.sendMessage(new TextMessage(json));
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
     private int getExpThreshold(int memberCount, int level) {
@@ -98,5 +134,11 @@ public class PointService {
                 {0, 300, 350, 400, 450}  // 5인 가족
         };
         return table[memberCount][level];
+    }
+    // 물주기 확인 api 백업
+    // 오늘 기준으로 해당 가족(fid)에서 'water' 활동을 한 uid 목록 반환
+    public List<Long> getWateredMembers(Long fid) {
+        Date today = Date.valueOf(LocalDate.now());
+        return pointDao.getTodayWateredUids(fid, today);
     }
 }

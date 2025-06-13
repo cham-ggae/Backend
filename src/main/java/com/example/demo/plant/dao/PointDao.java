@@ -3,6 +3,7 @@ package com.example.demo.plant.dao;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.sql.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -29,4 +30,11 @@ public interface PointDao {
     int getFamilyMemberCount(@Param("fid") Long fid);
     // 가족 공간의 식물 조회
     Long getPlantIdByFid(@Param("fid") Long fid);
+
+    // 물주기 확인 백업 api
+    // 오늘 날짜 기준으로, 해당 가족(fid)에 속한 유저 중 'water' 활동을 한 유저
+    List<Long> getTodayWateredUids(@Param("fid") Long fid, @Param("date") Date date);
+
+    String getUserName(@Param("uid") Long uid);
+    String getUserProfile(@Param("uid") Long uid);
 }

@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/points")
 @RequiredArgsConstructor
@@ -25,6 +27,12 @@ public class PointController {
             @PathVariable String type) {
         boolean done = pointService.checkActivityExists(uid, type);
         return ResponseEntity.ok(done);
+    }
+
+    @GetMapping("/watered-members/{fid}")
+    public ResponseEntity<List<Long>> getWateredMembers(@PathVariable Long fid) {
+        List<Long> uids = pointService.getWateredMembers(fid);
+        return ResponseEntity.ok(uids);
     }
 }
 

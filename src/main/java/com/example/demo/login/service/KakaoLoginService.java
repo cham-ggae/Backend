@@ -39,6 +39,7 @@ public class KakaoLoginService implements KakaoLogin {
     @Value("${kakao.redirect-uri}")
     private String redirectUri;
 
+    private static final long REFRESH_VALIDITY = 1000L * 60 * 60 * 24 * 14;
     /**
      * 카카오 인가 코드를 사용해 액세스 토큰과 리프레시 토큰을 요청하고,
      * 사용자 정보를 조회하여 {@link KakaoUserInfo}에 담아 반환.
@@ -149,31 +150,57 @@ public class KakaoLoginService implements KakaoLogin {
 
     @Override
     public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse response) {
-        String refreshToken = null;
+        // 1) 기존 refreshToken 쿠키에서 꺼내기
+        String oldRefresh = null;
         if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if ("refreshToken".equals(cookie.getName())) {
-                    refreshToken = cookie.getValue();
+            for (Cookie c : request.getCookies()) {
+                if ("refreshToken".equals(c.getName())) {
+                    oldRefresh = c.getValue();
                     break;
                 }
             }
         }
 
-        if (refreshToken == null || !jwtProvider.validateToken(refreshToken)) {
-            return ResponseEntity.status(401).body("Refresh Token이 유효하지 않음");
+        // 2) 없거나 유효하지 않으면 → 쿠키 삭제 후 401
+        if (oldRefresh == null || !jwtProvider.validateToken(oldRefresh)) {
+            // 기존 쿠키 지우기
+            Cookie deleteCookie = new Cookie("refreshToken", null);
+            deleteCookie.setHttpOnly(true);
+            deleteCookie.setSecure(true);
+            deleteCookie.setPath("/");
+            deleteCookie.setMaxAge(0);
+            response.addCookie(deleteCookie);
+
+            // 재로그인 안내
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Refresh Token이 만료되었습니다. 다시 로그인해 주세요."));
         }
 
-        String email = jwtProvider.getEmail(refreshToken);
-        String newAccessToken = jwtProvider.createAccessToken(email);
+        // 3) 새 토큰 발급
+        String email           = jwtProvider.getEmail(oldRefresh);
+        String newAccessToken  = jwtProvider.createAccessToken(email);
         String newRefreshToken = jwtProvider.createRefreshToken(email);
 
-        Cookie accessCookie = new Cookie("refreshToken", newRefreshToken);
-        accessCookie.setHttpOnly(true);
-        accessCookie.setSecure(true);
-        accessCookie.setPath("/");
-        accessCookie.setMaxAge(60 * 30); // 30분
-        response.addCookie(accessCookie);
+        // 4) 새 refreshToken 쿠키로 교체
+        Cookie refreshCookie = new Cookie("refreshToken", newRefreshToken);
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setSecure(true);
+        refreshCookie.setPath("/");
+        refreshCookie.setMaxAge((int)(REFRESH_VALIDITY / 1000)); // 14일
+        response.addCookie(refreshCookie);
 
-        return ResponseEntity.ok("Access Token 재발급 완료");
+        // 5) 새 accessToken은 Authorization 헤더로
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(newAccessToken);
+
+        // 6) 응답
+        return ResponseEntity
+                .ok()
+                .headers(headers)
+                .body(Map.of(
+                        "message", "토큰 재발급 성공",
+                        "accessToken", newAccessToken
+                ));
     }
 }

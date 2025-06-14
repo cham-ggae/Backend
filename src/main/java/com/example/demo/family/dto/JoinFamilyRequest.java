@@ -7,8 +7,6 @@ import lombok.AllArgsConstructor;
 /**
  * 가족 참여 요청 DTO (초대 코드로 가족 참여)
  *
- * @author 참깨라면팀
- * @since 1.0
  */
 @Data
 @NoArgsConstructor

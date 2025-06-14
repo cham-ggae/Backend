@@ -7,8 +7,6 @@ import lombok.AllArgsConstructor;
 /**
  * 초대 코드 검증 응답 DTO
  *
- * @author 참깨라면팀
- * @since 1.0
  */
 @Data
 @NoArgsConstructor

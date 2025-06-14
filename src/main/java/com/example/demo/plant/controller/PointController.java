@@ -1,5 +1,6 @@
 package com.example.demo.plant.controller;
 
+import com.example.demo.login.service.AuthenticationService;
 import com.example.demo.plant.dto.AddPointRequestDto;
 import com.example.demo.plant.service.PointService;
 import lombok.RequiredArgsConstructor;
@@ -14,17 +15,18 @@ import java.util.List;
 public class PointController {
 
     private final PointService pointService;
+    private final AuthenticationService authenticationService;
 
     @PostMapping("/add")
     public ResponseEntity<String> addPoint(@RequestBody AddPointRequestDto request) {
-        pointService.addPoint(request);
+        Long uid = authenticationService.getCurrentUserId();
+        pointService.addPoint(uid, request.getActivityType());
         return ResponseEntity.ok("포인트 적립 완료");
     }
 
-    @GetMapping("/check-today/{uid}/{type}")
-    public ResponseEntity<Boolean> checkToday(
-            @PathVariable Long uid,
-            @PathVariable String type) {
+    @GetMapping("/check-today/{type}")
+    public ResponseEntity<Boolean> checkToday(@PathVariable String type) {
+        Long uid = authenticationService.getCurrentUserId();
         boolean done = pointService.checkActivityExists(uid, type);
         return ResponseEntity.ok(done);
     }

@@ -6,7 +6,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AddPointRequestDto {
-    private Long uid;              // 사용자 ID
-    private Long fid;              // 가족 ID
-    private String activityType;  // 활동 타입
+    private String activityType;  // 활동 타입만 전달 받음
 }

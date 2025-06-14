@@ -1,7 +1,7 @@
 package com.example.demo.plant.service;
 
+import com.example.demo.login.service.AuthenticationService;
 import com.example.demo.plant.dao.PointDao;
-import com.example.demo.plant.dto.AddPointRequestDto;
 import com.example.demo.plant.websocket.WaterWebSocketHandler;
 import com.example.demo.plant.websocket.dto.WaterEventData;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,12 +17,14 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class PointService {
 
     private final PointDao pointDao;
+    private final AuthenticationService authService;
 
     // 활동 적용 시 자동완료를 위한 메서드
     public boolean checkActivityExists(Long uid, String type) {
@@ -40,15 +42,16 @@ public class PointService {
             "register", 10,
             "survey", 5
     );
+
     //활동에 따른 포인트 적립 및 경험치 처리
     @Transactional
-    public void addPoint(AddPointRequestDto dto) {
-        Long uid = dto.getUid();
-        String type = dto.getActivityType();
+    public void addPoint(Long uid, String activityType) {
+
         // 활동 1일 1회 제한
-        if (pointDao.checkActivityExists(uid, type)) {
+        if (pointDao.checkActivityExists(uid, activityType)) {
             throw new RuntimeException("오늘 이미 이 활동을 완료했습니다.");
         }
+
         //사용자 ID → 가족 ID, 식물 ID 조회
         Long fid = pointDao.getFamilyIdByUid(uid);
         Long pid = pointDao.getPlantIdByFid(fid);
@@ -63,17 +66,17 @@ public class PointService {
         }
 
         //활동 타입에 해당하는 포인트 추출
-        int point = activityPointMap.getOrDefault(type, 0);
+        int point = activityPointMap.getOrDefault(activityType, 0);
 
         //활동 내역 저장 (Point_activities 테이블)
         Map<String, Object> activity = new HashMap<>();
         activity.put("uid", uid);
         activity.put("fid", fid);
         activity.put("pid", pid);
-        activity.put("activity_type", type);
+        activity.put("activity_type", activityType);
         activity.put("points_earned", point);
         activity.put("activity_date", LocalDate.now());
-        activity.put("description", type + " 활동");
+        activity.put("description", activityType + " 활동");
 
         pointDao.insertActivity(activity);
 
@@ -84,7 +87,7 @@ public class PointService {
 
         // 현재 식물 레벨 및 가족 구성원 수 기반으로 레벨업 조건 계산
         int level = pointDao.getPlantLevel(pid);
-        int required = getExpThreshold(pointDao.getFamilyMemberCount(fid), level);
+        int required = getExpThreshold(memberCount, level);
 
         // 레벨업 조건 만족 시 → 레벨업 처리 및 경험치 초기화
         if (updatedExp >= required) {
@@ -92,35 +95,29 @@ public class PointService {
             pointDao.updateExperience(pid, 0); // 경험치 리셋
         }
 
-        // 물주기일 경우 WebSocket 브로드캐스트 전송
-        if (type.equals("water")) {
+        // 물주기일 경우 WebSocket 브로드캐스트 전송 및 영양제 증가 체크
+        if (activityType.equals("water")) {
             try {
-                // (1) 사용자 이름 및 프로필 이미지 가져오기 (UserDao 추가 필요)
-                String name = pointDao.getUserName(uid);              // Users.name
-                String avatarUrl = pointDao.getUserProfile(uid);      // Users.profile_image
+                String name = pointDao.getUserName(uid);
+                String avatarUrl = pointDao.getUserProfile(uid);
 
-                // (2) DTO 생성
                 WaterEventData event = new WaterEventData();
                 event.setFid(fid);
                 event.setUid(uid);
                 event.setName(name);
                 event.setAvatarUrl(avatarUrl);
 
-                // (3) JSON 변환
                 String json = new ObjectMapper().writeValueAsString(event);
-
-                // (4) WebSocket 세션에 브로드캐스트
                 for (WebSocketSession s : WaterWebSocketHandler.sessions) {
                     if (s.isOpen()) {
                         s.sendMessage(new TextMessage(json));
                     }
                 }
-                // (5) 오늘 가족 모두 물 줬는지 검사 → 영양제 +1
+
                 Date today = Date.valueOf(LocalDate.now());
-                int total = pointDao.getFamilyMemberCount(fid);
                 int watered = pointDao.countWateredMembersToday(fid, today);
-                if (total == watered) {
-                    pointDao.incrementNutrient(fid); // Family_space.nutrial += 1
+                if (memberCount == watered) {
+                    pointDao.incrementNutrient(fid);
                 }
 
             } catch (Exception e) {
@@ -134,16 +131,16 @@ public class PointService {
             throw new IllegalArgumentException("지원하지 않는 상태입니다.");
         }
         int[][] table = {
-                {},                      // index 0: 사용 안 함
-                {},                      // index 1: 사용 안 함
-                {0, 150, 200, 250, 300}, // 2인 가족
-                {0, 200, 250, 300, 350}, // 3인 가족
-                {0, 250, 300, 350, 400}, // 4인 가족
-                {0, 300, 350, 400, 450}  // 5인 가족
+                {},
+                {},
+                {0, 150, 200, 250, 300},
+                {0, 200, 250, 300, 350},
+                {0, 250, 300, 350, 400},
+                {0, 300, 350, 400, 450}
         };
         return table[memberCount][level];
     }
-    // 물주기 확인 api 백업
+
     // 오늘 기준으로 해당 가족(fid)에서 'water' 활동을 한 uid 목록 반환
     public List<Long> getWateredMembers(Long fid) {
         Date today = Date.valueOf(LocalDate.now());

@@ -13,7 +13,6 @@ public interface PointDao {
     boolean checkActivityExists(@Param("uid") Long uid, @Param("type") String type);
     //해당 사용자의 가족 공간 ID 조회
     Long getFamilyIdByUid(@Param("uid") Long uid);
-
     // 활동 수행 내역
     void insertActivity(Map<String, Object> activity);
 

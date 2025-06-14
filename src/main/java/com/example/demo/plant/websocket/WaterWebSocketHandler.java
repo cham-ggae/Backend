@@ -1,18 +1,15 @@
 package com.example.demo.plant.websocket;
 
 import com.example.demo.plant.websocket.dto.WaterEventData;
-import com.example.demo.util.JwtUtil;
+import com.example.demo.provider.JwtProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import java.net.URI;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -22,38 +19,31 @@ public class WaterWebSocketHandler extends TextWebSocketHandler {
 
     public static final Set<WebSocketSession> sessions = new CopyOnWriteArraySet<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final JwtProvider jwtProvider;
 
-    @Value("${jwt.secret}")
-    private String jwtSecret;
+    public WaterWebSocketHandler(JwtProvider jwtProvider) {
+        this.jwtProvider = jwtProvider;
+    }
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) {
-        try {
-            URI uri = session.getUri();
-            if (uri == null || uri.getQuery() == null || !uri.getQuery().contains("token=")) {
-                session.close(CloseStatus.BAD_DATA);
-                return;
-            }
-            String token = uri.getQuery().split("token=")[1];
-            Claims claims = JwtUtil.parseToken(token, jwtSecret);
-            Long uid = claims.get("uid", Long.class);
-            String name = claims.get("name", String.class);
-            String avatarUrl = claims.get("profile_image", String.class);
+    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        String query = session.getUri().getQuery();
+        String token = null;
 
-            log.info("WebSocket 연결됨: {}, uid={}, name={}", session.getId(), uid, name);
-
-            // 연결된 사용자 정보를 세션에 저장해도 좋음 (Optional)
-            session.getAttributes().put("uid", uid);
-            session.getAttributes().put("name", name);
-            session.getAttributes().put("avatarUrl", avatarUrl);
-
-            sessions.add(session);
-        } catch (Exception e) {
-            log.warn("JWT 파싱 실패 또는 연결 거부: {}", e.getMessage());
-            try {
-                session.close(CloseStatus.BAD_DATA);
-            } catch (Exception ignored) {}
+        if (query != null && query.startsWith("token=")) {
+            token = query.substring("token=".length());
         }
+
+        if (token == null || !jwtProvider.validateToken(token)) {
+            log.warn("WebSocket 연결 거부 - 유효하지 않은 토큰");
+            session.close(CloseStatus.NOT_ACCEPTABLE);
+            return;
+        }
+
+        String email = jwtProvider.getEmail(token);
+        session.getAttributes().put("userEmail", email);
+        sessions.add(session);
+        log.info("WebSocket 연결 성공 - 사용자: {}", email);
     }
 
     @Override

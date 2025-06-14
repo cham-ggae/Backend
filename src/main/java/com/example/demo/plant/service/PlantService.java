@@ -15,7 +15,6 @@ public class PlantService {
     public PlantResponseDto getLatestPlantByFid(int fid) {
         return plantDao.findLatestPlantByFamilyId(fid);
     }
-    //
 
     // 새싹 생성
     public void createPlant(int fid, String type) {

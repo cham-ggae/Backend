@@ -57,5 +57,10 @@
         WHERE rl.uid = #{uid}
         ORDER BY rl.received_at DESC
     </select>
+    <select id="getRewardInfoById" resultType="com.example.demo.plant.dto.RewardHistoryDto">
+        SELECT reward_name, description, NOW() AS received_at
+        FROM rewards
+        WHERE reward_id = #{rewardId}
+    </select>
 
 </mapper>

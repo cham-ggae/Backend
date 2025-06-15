@@ -126,7 +126,7 @@ public class PointService {
         }
     }
 
-    private int getExpThreshold(int memberCount, int level) {
+    public int getExpThreshold(int memberCount, int level) {
         if (memberCount < 2 || memberCount > 5 || level < 1 || level >= 5) {
             throw new IllegalArgumentException("지원하지 않는 상태입니다.");
         }

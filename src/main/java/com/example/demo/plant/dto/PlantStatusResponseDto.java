@@ -12,6 +12,7 @@ import lombok.Setter;
 public class PlantStatusResponseDto {
     private int level;
     private int experiencePoint;
+    private int expThreshold; // 💡 추가 필드
     private boolean isCompleted;
     private String plantType;
 }

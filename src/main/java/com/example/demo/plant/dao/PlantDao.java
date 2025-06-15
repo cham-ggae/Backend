@@ -32,5 +32,8 @@ public interface PlantDao {
     Long getLatestPlantId(@Param("fid") Long fid);
     // 완료 된 식물
     boolean isPlantCompleted(@Param("pid") Long pid);
-
+    // 이미 보상을 받았는 지 확인
+    boolean hasAlreadyClaimedReward(@Param("uid") Long uid, @Param("pid") Long pid);
+    // 보상 기록 확인 rewards
+    RewardHistoryDto getRewardInfoById(@Param("rewardId") int rewardId);
 }

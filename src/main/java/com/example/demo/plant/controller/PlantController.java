@@ -54,10 +54,10 @@ public class PlantController {
      */
     @PostMapping("/claim-reward")
     @Operation(summary = "보상 수령", description = "성장 완료된 식물에 대해 보상을 수령합니다.")
-    public ResponseEntity<String> claimReward() {
+    public ResponseEntity<RewardHistoryDto> claimReward() {
         Long uid = authService.getCurrentUserId();
-        plantService.claimReward(uid);
-        return ResponseEntity.ok("보상 수령 완료");
+        RewardHistoryDto result = plantService.claimReward(uid);
+        return ResponseEntity.ok(result);
     }
 
     /**

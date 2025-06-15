@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- namespace는 패키지 포함한 mapper(DAO interface) 이름으로 설정 한다. -->
+<mapper namespace="com.example.demo.plant.dao.NutrientDao">
+    <select id="getNutrientStock" resultType="int">
+        SELECT nutrial
+        FROM Family_space
+        WHERE fid = #{fid}
+    </select>
+</mapper>

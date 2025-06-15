@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class AuthenticationService {
+
     /**
      * 현재 인증된 사용자 정보 조회
      *

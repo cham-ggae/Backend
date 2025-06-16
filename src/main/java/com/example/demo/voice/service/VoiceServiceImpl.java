@@ -23,7 +23,11 @@ public class VoiceServiceImpl implements VoiceService {
     private final JwtProvider jwtProvider;
     private final GoogleSttService googleSttService;
     private final UserDao userDao;
+    private final GoogleTtsService googleTtsService;
 
+    /*
+    음성 파일 업로드 및 STT 처리 -> 텍스트 추출 후 챗봇 응답 요청까지
+     */
     @Override
     public TranscribedTextResponse handleAudioUpload(MultipartFile file, Long sessionId, String token) {
         try {
@@ -56,7 +60,17 @@ public class VoiceServiceImpl implements VoiceService {
         }
     }
 
+    /*
+    텍스트를 음성 (MP3 바이트)로 변환
+     */
+    @Override
+    public byte[] synthesizeSpeech(String text) {
+        return googleTtsService.synthesizeSpeech(text);
+    }
 
+    /*
+    TTS 로그를 DB에 저장
+     */
     @Override
     public TtsLogResponse saveTtsLog(TtsLogRequest request) {
         voiceDao.insertTtsLog(request);

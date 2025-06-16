@@ -42,6 +42,14 @@ public class VoiceController {
         return ResponseEntity.ok(response);
     }
 
+    // TTS 스트리밍
+    @GetMapping(value = "/tts", produces = "audio/mpeg")
+    public ResponseEntity<byte[]> tts(@RequestParam String text) {
+        byte[] mp3Data = voiceService.synthesizeSpeech(text);
+        return ResponseEntity.ok()
+                .contentType(MediaType.valueOf("audio/mpeg"))
+                .body(mp3Data);
+    }
 
     // TTS 로그 저장
     @PostMapping("/tts-log")

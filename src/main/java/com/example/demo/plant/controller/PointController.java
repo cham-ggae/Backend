@@ -24,11 +24,11 @@ public class PointController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("/add")
-    @Operation(summary = "포인트 적립", description = "지정된 활동(activityType)에 대해 포인트를 적립합니다. JWT 토큰으로 사용자를 식별합니다.")
+    @Operation(summary = "포인트 적립", description = "지정된 활동 \"attendance\", \"water\", \"nutrient\", \"emotion\", \"quiz\",\"lastleaf\", \"register\",\"survey\"")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "포인트 적립 완료"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "400", description = "중복 활동 또는 기타 오류")
+            @ApiResponse(responseCode = "400", description = "중복 활동 또는 활동 불가 상태"),
+            @ApiResponse(responseCode = "409", description = "구성원 수 부족 또는 식물 미생성")
     })
     public ResponseEntity<String> addPoint(
             @Parameter(description = "활동 요청 데이터", required = true)

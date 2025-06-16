@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
+import static com.example.demo.plant.exception.PlantExceptions.*;
 
 import java.sql.Date;
 import java.time.LocalDate;
@@ -49,7 +50,7 @@ public class PointService {
 
         // 활동 1일 1회 제한
         if (pointDao.checkActivityExists(uid, activityType)) {
-            throw new RuntimeException("오늘 이미 이 활동을 완료했습니다.");
+            throw new PointAlreadyAddedException("오늘 이미 이 활동을 완료했습니다.");
         }
 
         //사용자 ID → 가족 ID, 식물 ID 조회
@@ -58,11 +59,11 @@ public class PointService {
 
         // 식물이 없거나 가족 구성원이 1명뿐일 경우 포인트 적립 중단
         if (pid == null) {
-            throw new RuntimeException("새싹이 아직 생성되지 않아 포인트 적립이 불가능합니다.");
+            throw new PlantNotFoundException("새싹이 아직 생성되지 않아 포인트 적립이 불가능합니다.");
         }
         int memberCount = pointDao.getFamilyMemberCount(fid);
         if (memberCount < 2) {
-            throw new IllegalStateException("가족 구성원이 2명 이상일 때만 포인트 적립이 가능합니다.");
+            throw new NotEnoughFamilyMembersException("가족 구성원이 2명 이상일 때만 포인트 적립이 가능합니다.");
         }
 
         //활동 타입에 해당하는 포인트 추출

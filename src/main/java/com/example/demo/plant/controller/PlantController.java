@@ -4,6 +4,8 @@ import com.example.demo.login.service.AuthenticationService;
 import com.example.demo.plant.dto.*;
 import com.example.demo.plant.service.PlantService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +32,12 @@ public class PlantController {
      * @return 성공 메시지
      */
     @PostMapping
-    @Operation(summary = "새 식물 생성", description = "새싹을 생성합니다. 조건: 가족 구성원 ≥ 2명 && (기존 식물 없음 또는 완료된 상태)")
+    @Operation(summary = "새 식물 생성", description = "새싹을 생성합니다. 조건: 가족 구성원 ≥ 2명 && (기존 식물 없음 또는 완료된 상태) / flower ,tree 선택")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "새싹 생성 성공"),
+            @ApiResponse(responseCode = "400", description = "가족 구성원이 2명 미만이거나 입력 값 오류"),
+            @ApiResponse(responseCode = "409", description = "기존 식물이 아직 완료되지 않음")
+    })
     public ResponseEntity<String> createPlant(@RequestBody CreatePlantRequestDto request) {
         Long uid = authService.getCurrentUserId();
         plantService.createPlant(uid, request.getPlantType()); // flower or tree
@@ -54,6 +61,10 @@ public class PlantController {
      */
     @PostMapping("/claim-reward")
     @Operation(summary = "보상 수령", description = "성장 완료된 식물에 대해 보상을 수령합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "보상 수령 성공"),
+            @ApiResponse(responseCode = "409", description = "식물이 완료되지 않았거나 이미 보상을 수령함")
+    })
     public ResponseEntity<RewardHistoryDto> claimReward() {
         Long uid = authService.getCurrentUserId();
         RewardHistoryDto result = plantService.claimReward(uid);

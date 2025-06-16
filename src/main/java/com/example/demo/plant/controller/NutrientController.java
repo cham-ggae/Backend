@@ -26,8 +26,8 @@ public class NutrientController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 실패"),
-            @ApiResponse(responseCode = "500", description = "서버 오류")
+            @ApiResponse(responseCode = "400", description = "가족 정보가 존재하지 않음"),
+            @ApiResponse(responseCode = "401", description = "인증 실패")
     })
     public ResponseEntity<Integer> getNutrientStock() {
         Long uid = authService.getCurrentUserId();

@@ -5,6 +5,7 @@ import com.example.demo.plant.dto.PlantStatusResponseDto;
 import com.example.demo.plant.dto.RewardHistoryDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import static com.example.demo.plant.exception.PlantExceptions.*;
 
 import java.util.List;
 
@@ -19,11 +20,11 @@ public class PlantService {
         Long fid = plantDao.getUserFid(uid);
 
         if (plantDao.selectFamilyMemberCount(fid) < 2) {
-            throw new IllegalArgumentException("구성원 2명 이상 필요");
+            throw new NotEnoughFamilyMembersException("가족 구성원은 최소 2명 이상이어야 합니다.");
         }
 
         if (plantDao.hasUncompletedPlant(fid)) {
-            throw new IllegalStateException("기존 식물이 존재함");
+            throw new UncompletedPlantExistsException("기존 식물이 아직 완료되지 않았습니다.");
         }
 
         int kid = plantDao.getPlantKindId(plantType);
@@ -55,11 +56,11 @@ public class PlantService {
         Long pid = plantDao.getLatestPlantId(fid);
 
         if (!plantDao.isPlantCompleted(pid)) {
-            throw new IllegalStateException("아직 완료되지 않은 식물입니다.");
+            throw new PlantNotCompletedException("아직 완료되지 않은 식물입니다.");
         }
 
         if (plantDao.hasAlreadyClaimedReward(uid, pid)) {
-            throw new IllegalStateException("이미 보상을 수령한 식물입니다.");
+            throw new RewardAlreadyClaimedException("이미 보상을 수령한 식물입니다.");
         }
 
         int rewardId = calculateRewardId(fid, pid);

@@ -21,17 +21,28 @@ public class AuthenticationService {
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
+        // 🔍 Authentication 객체가 null인지 확인
+        System.out.println("[DEBUG] authentication = " + authentication);
+
         if (authentication == null || !authentication.isAuthenticated()) {
+            System.out.println("[DEBUG] 인증 실패 - authentication is null or not authenticated");
             throw new AuthenticationException("인증되지 않은 사용자입니다.");
         }
 
         Object principal = authentication.getPrincipal();
+
+        // 🔍 Principal의 실제 타입 출력
+        System.out.println("[DEBUG] principal class = " + principal.getClass().getName());
+        System.out.println("[DEBUG] principal value = " + principal);
+
         if (!(principal instanceof User)) {
+            System.out.println("[DEBUG] principal이 User가 아님");
             throw new AuthenticationException("잘못된 인증 정보입니다.");
         }
 
         return (User) principal;
     }
+
 
     /**
      * 현재 인증된 사용자의 ID 조회
@@ -74,6 +85,7 @@ public class AuthenticationService {
         }
     }
 
+
     /**
      * 인증 관련 예외 클래스
      */
@@ -81,5 +93,8 @@ public class AuthenticationService {
         public AuthenticationException(String message) {
             super(message);
         }
+
+
     }
+
 }

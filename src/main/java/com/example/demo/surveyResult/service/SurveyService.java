@@ -11,8 +11,8 @@ import org.springframework.stereotype.Service;
 public class SurveyService {
     private final SurveyMapper surveyMapper;
 
-    public void SurveyResult(SurveyResultDto dto){
-        surveyMapper.surveyResult(dto.getUserId(), dto.getBugId());
+    public void SurveyResult(int userId, int bugId){
+        surveyMapper.surveyResult(userId, bugId);
     }
 
     public SurveyResponseDto selectedBugId(int bugId){

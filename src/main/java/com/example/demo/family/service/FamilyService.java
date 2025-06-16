@@ -295,41 +295,29 @@ public class FamilyService {
     }
 
     /**
-     * 가족 할인 정보 계산
-     * 구성원 수에 따른 인당 차등 할인 적용
+     * 가족 할인 정보 계산 (age 문자열 처리 수정)
      */
     private DiscountInfo calculateFamilyDiscount(FamilySpace family, List<FamilyMember> members) {
         int memberCount = members.size();
-        int discountPerPerson = 0;
+        int baseDiscount = memberCount * 14000; // 기본 할인: 인당 14,000원
 
-        // 구성원 수에 따른 인당 할인 계산
-        switch (memberCount) {
-            case 2:
-                discountPerPerson = 10000; // 인당 1만원
-                break;
-            case 3:
-                discountPerPerson = 14000; // 인당 1만4천원
-                break;
-            case 4:
-            case 5: // 5명도 4명과 동일한 할인 적용
-                discountPerPerson = 20000; // 인당 2만원
-                break;
-            default:
-                discountPerPerson = 0; // 1명 이하는 할인 없음
-                break;
+        // 청소년 할인 계산 (19세 미만) - 수정된 로직
+        int youthDiscount = 0;
+        for (FamilyMember member : members) {
+            if (member.isYouthDiscountEligible()) {
+                youthDiscount += 10000; // 청소년 추가 할인 10,000원
+            }
         }
 
-        // 총 할인 금액 = 인당 할인 × 구성원 수
-        int totalDiscount = discountPerPerson * memberCount;
+        int totalDiscount = baseDiscount + youthDiscount;
 
-        // 할인 설명 문구 생성
-        StringBuilder descriptionBuilder = new StringBuilder();
-        descriptionBuilder.append(family.getCombiType())
-                .append(" 이용 시 한달에 최대 ")
-                .append(String.format("%,d", totalDiscount))
-                .append("원 아낄 수 있어요!");
+        String description = String.format(
+                "%s 이용 시 한달에 최대 %,d원 아낄 수 있어요!",
+                family.getCombiType(),
+                totalDiscount
+        );
 
-        return new DiscountInfo(totalDiscount, descriptionBuilder.toString(), memberCount);
+        return new DiscountInfo(totalDiscount, description, memberCount);
     }
 
     // ========================================

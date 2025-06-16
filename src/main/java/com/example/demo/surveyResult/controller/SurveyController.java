@@ -10,6 +10,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * 설문 결과 관련 요청을 처리하는 컨트롤러입니다.
+ * - 설문 결과 저장 (인증 기반 사용자)
+ * - 설문 결과 조회 (userId 필요 없음)
+ */
+
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "설문 결과", description = "설문 유형 결과 저장 API")
@@ -18,7 +24,11 @@ public class SurveyController {
     private final SurveyService surveyService;
     private final AuthenticationService authenticationService;
 
-    // 설문 결과 저장
+    /**
+     * 인증된 사용자의 설문 결과를 저장합니다.
+     * @param dto bugId만 포함된 설문 결과 DTO
+     * @return 저장 성공 메시지
+     */
     @PostMapping("/surveyResult")
     @Operation(summary = "설문 유형 결과 저장", description = "설문 후 유형 결과 DB에 저장")
     public ResponseEntity<?> surveyResult(@RequestBody SurveyResultDto dto) {
@@ -27,7 +37,13 @@ public class SurveyController {
         return ResponseEntity.ok("설문 결과 저장 완료");
     }
 
-    // bugId로 유형 상세 정보 조회
+    /**
+     * bugId를 통해 설문 유형 결과를 조회합니다.
+     * userId 불필요 (공개 API)
+     *
+     * @param bugId 유형 ID
+     * @return 유형 상세 정보
+     */
     @GetMapping("/surveyResult/{bugId}")
     @Operation(summary = "설문 유형 결과 조회", description = "설문 후 유형 결과 조회하기")
     public ResponseEntity<SurveyResponseDto> selectedBugId(@PathVariable int bugId) {

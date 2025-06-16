@@ -39,7 +39,7 @@ public class SecurityConfig {
                         .requestMatchers("/webjars/**").permitAll()
 
                         // 기타 모든 요청
-                        .anyRequest().permitAll()
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .formLogin(AbstractHttpConfigurer::disable) // 기본 로그인 페이지 비활성화

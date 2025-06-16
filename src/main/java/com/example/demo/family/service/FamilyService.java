@@ -301,15 +301,9 @@ public class FamilyService {
         int memberCount = members.size();
         int baseDiscount = memberCount * 14000; // 기본 할인: 인당 14,000원
 
-        // 청소년 할인 계산 (19세 미만) - 수정된 로직
-        int youthDiscount = 0;
-        for (FamilyMember member : members) {
-            if (member.isYouthDiscountEligible()) {
-                youthDiscount += 10000; // 청소년 추가 할인 10,000원
-            }
-        }
 
-        int totalDiscount = baseDiscount + youthDiscount;
+
+        int totalDiscount = baseDiscount;
 
         String description = String.format(
                 "%s 이용 시 한달에 최대 %,d원 아낄 수 있어요!",

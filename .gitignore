@@ -9,6 +9,7 @@ application.yml
 # 환경 변수 파일
 .env
 .env.*
+src/main/resources/gcp/gcp-key.json
 
 ### log file ###
 logs

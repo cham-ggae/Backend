@@ -147,11 +147,95 @@ public class LoginController {
      * @return 업데이트 결과
      */
     @Operation(
-            summary = "추가 유저 정보 업데이트",
-            description = "신규 회원 및 성별, 연령대 정보가 없는 회원의 정보를 업데이트 합니다."
+            summary = "사용자 추가 정보 업데이트",
+            description = "로그인한 사용자의 추가 정보(성별, 나이대)를 업데이트합니다. " +
+                    "이 정보는 사용자가 처음 로그인한 후 필수로 입력해야 하는 정보입니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
-    @PostMapping("/user")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "사용자 정보 업데이트 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = Map.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                {
+                                    "success": true,
+                                    "message": "사용자 정보가 성공적으로 업데이트되었습니다."
+                                }
+                                """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청 데이터",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                {
+                                    "success": false,
+                                    "message": "잘못된 요청 데이터입니다.",
+                                    "error": "유효성 검증 실패"
+                                }
+                                """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                {
+                                    "success": false,
+                                    "message": "인증이 필요합니다."
+                                }
+                                """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "서버 내부 오류",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                {
+                                    "success": false,
+                                    "message": "사용자 정보 업데이트에 실패했습니다.",
+                                    "error": "데이터베이스 연결 오류"
+                                }
+                                """
+                            )
+                    )
+            )
+    })
+    @PostMapping(value = "/user", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, Object>> updateAdditionalInfo(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "사용자 추가 정보 (성별, 나이대)",
+                    required = true,
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = AdditionalUserInfoRequest.class),
+                            examples = @ExampleObject(
+                                    name = "사용자 추가 정보 예시",
+                                    value = """
+                                {
+                                    "gender": "female",
+                                    "age": "20~29"
+                                }
+                                """
+                            )
+                    )
+            )
             @Valid @RequestBody AdditionalUserInfoRequest request) {
 
         try {

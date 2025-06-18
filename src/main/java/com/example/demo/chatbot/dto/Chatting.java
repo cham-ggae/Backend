@@ -1,5 +1,6 @@
 package com.example.demo.chatbot.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 @Data
@@ -9,6 +10,8 @@ public class Chatting {
     private Long uid;
     private String role;
     private String content;
-    private String created_at;
-    private String session_id;
+    @JsonProperty("created_at")
+    private String createdAt;
+    @JsonProperty("session_id")
+    private String sessionId;
 }

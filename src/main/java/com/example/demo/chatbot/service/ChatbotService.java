@@ -45,7 +45,7 @@ public class ChatbotService implements Chatbot{
         userChat.setUid(userId);
         userChat.setRole("user");
         userChat.setContent(userContent);
-        userChat.setSession_id(sessionId);
+        userChat.setSessionId(sessionId);
         try {
             chatbotDao.insertChatting(userChat);
         } catch (Exception e) {
@@ -110,7 +110,7 @@ public class ChatbotService implements Chatbot{
                 aiChat.setUid(userId);
                 aiChat.setRole("assistant");
                 aiChat.setContent(aiBuilder.toString());
-                aiChat.setSession_id(sessionId);
+                aiChat.setSessionId(sessionId);
                 try {
                     chatbotDao.insertChatting(aiChat);
                 } catch (Exception e) {

@@ -13,4 +13,8 @@ public interface UserDao {
     public void joinMembership(@Param("email") String email,@Param("accessToken") String AccessToken,@Param("refreshToken") String RefreshToken, @Param("gender") String gender, @Param("age") String age, @Param("name") String name, @Param("profile_image") String profile_image) throws SQLException;
     public void updateUserInfo(@Param("email") String email, @Param("age") String age, @Param("gender") String gender) throws SQLException;
     public void updateToken(@Param("email") String email,@Param("accessToken") String AccessToken,@Param("refreshToken") String RefreshToken) throws SQLException;
+
+    // 카카오 토큰 관리용 메서드
+    public void updateKakaoTokens(@Param("email") String email, @Param("kakaoAccessToken") String kakaoAccessToken, @Param("kakaoRefreshToken") String kakaoRefreshToken) throws SQLException;
+    public void clearKakaoTokens(@Param("email") String email) throws SQLException;
 }

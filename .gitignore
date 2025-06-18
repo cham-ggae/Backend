@@ -47,5 +47,4 @@ out/
 ### VS Code ###
 .vscode/
 
-/resources/gcp/
-gcp-key.json
+**/src/main/resources/gcp/

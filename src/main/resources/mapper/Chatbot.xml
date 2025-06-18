@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- namespace는 패키지 포함한 mapper(DAO interface) 이름으로 설정 한다. -->
+<mapper namespace="com.example.demo.chatbot.dao.ChatbotDao">
+    <insert id="insertChatting"
+            parameterType="com.example.demo.chatbot.dto.Chatting"
+            useGeneratedKeys="true" keyProperty="cid">
+        INSERT INTO chats (uid, role, content, session_id)
+        VALUES (#{uid}, #{role}, #{content}, #{session_id})
+    </insert>
+    <select id="selectChatting"
+            parameterType="String"
+            resultType="com.example.demo.chatbot.dto.Chatting">
+        SELECT
+            cid,
+            uid,
+            role,
+            content,
+            created_at,
+            session_id
+        FROM chats
+        WHERE session_id = #{session_id}
+        ORDER BY created_at DESC
+            LIMIT 20
+    </select>
+</mapper>

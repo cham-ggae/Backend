@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.familycard.dao.FamilyCardCommentDao">
+
+    <!-- ========================================
+         1. 조회 관련 쿼리
+         ======================================== -->
+
+    <!-- 특정 메시지 카드의 모든 댓글 조회 (등록순, 작성자 정보 포함) -->
+    <select id="getCommentsByCardId" parameterType="long" resultType="com.example.demo.familycard.dto.CommentResponse">
+        SELECT
+        fcc.comment_id as commentId,
+        fcc.fcid,
+        fcc.uid,
+        u.name as authorName,
+        u.profile_image as authorProfileImage,
+        fcc.content,
+        fcc.created_at as createdAt
+        FROM Family_cards_comment fcc
+        INNER JOIN Users u ON fcc.uid = u.uid
+        WHERE fcc.fcid = #{fcid}
+        ORDER BY fcc.created_at ASC
+    </select>
+
+    <!-- 특정 댓글 상세 조회 (작성자 정보 포함) -->
+    <select id="getCommentById" parameterType="long" resultType="com.example.demo.familycard.dto.CommentResponse">
+        SELECT
+        fcc.comment_id as commentId,
+        fcc.fcid,
+        fcc.uid,
+        u.name as authorName,
+        u.profile_image as authorProfileImage,
+        fcc.content,
+        fcc.created_at as createdAt
+        FROM Family_cards_comment fcc
+        INNER JOIN Users u ON fcc.uid = u.uid
+        WHERE fcc.comment_id = #{commentId}
+    </select>
+
+    <!-- 댓글 기본 정보만 조회 (권한 체크용) -->
+    <select id="getCommentBasicInfo" parameterType="long" resultType="com.example.demo.familycard.dto.FamilyCardComment">
+        SELECT
+        comment_id as commentId,
+        fcid,
+        uid,
+        content,
+        created_at as createdAt
+        FROM Family_cards_comment
+        WHERE comment_id = #{commentId}
+    </select>
+
+    <!-- 특정 메시지 카드의 댓글 총 개수 조회 -->
+    <select id="getCommentCount" parameterType="long" resultType="int">
+        SELECT COUNT(*)
+        FROM Family_cards_comment
+        WHERE fcid = #{fcid}
+    </select>
+
+    <!-- 특정 메시지 카드의 최근 N개 댓글 조회 -->
+    <select id="getRecentComments" resultType="com.example.demo.familycard.dto.CommentResponse">
+        SELECT
+        fcc.comment_id as commentId,
+        fcc.fcid,
+        fcc.uid,
+        u.name as authorName,
+        u.profile_image as authorProfileImage,
+        fcc.content,
+        fcc.created_at as createdAt
+        FROM Family_cards_comment fcc
+        INNER JOIN Users u ON fcc.uid = u.uid
+        WHERE fcc.fcid = #{fcid}
+        ORDER BY fcc.created_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- ========================================
+         2. 생성/수정/삭제 관련 쿼리
+         ======================================== -->
+
+    <!-- 새로운 댓글 생성 -->
+    <insert id="createComment" parameterType="com.example.demo.familycard.dto.FamilyCardComment" useGeneratedKeys="true" keyProperty="commentId">
+        INSERT INTO Family_cards_comment (fcid, uid, content, created_at)
+        VALUES (#{fcid}, #{uid}, #{content}, NOW())
+    </insert>
+
+    <!-- 댓글 내용 수정 -->
+    <update id="updateComment">
+        UPDATE Family_cards_comment
+        SET content = #{content}
+        WHERE comment_id = #{commentId}
+    </update>
+
+    <!-- 댓글 삭제 -->
+    <delete id="deleteComment" parameterType="long">
+        DELETE FROM Family_cards_comment
+        WHERE comment_id = #{commentId}
+    </delete>
+
+    <!-- 특정 메시지 카드의 모든 댓글 삭제 (CASCADE용) -->
+    <delete id="deleteCommentsByCardId" parameterType="long">
+        DELETE FROM Family_cards_comment
+        WHERE fcid = #{fcid}
+    </delete>
+
+    <!-- ========================================
+         3. 권한 및 검증 관련 쿼리
+         ======================================== -->
+
+    <!-- 댓글 존재 여부 확인 -->
+    <select id="isCommentExists" parameterType="long" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM Family_cards_comment
+        WHERE comment_id = #{commentId}
+    </select>
+
+    <!-- 사용자가 특정 댓글의 작성자인지 확인 -->
+    <select id="isCommentOwner" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM Family_cards_comment
+        WHERE comment_id = #{commentId} AND uid = #{uid}
+    </select>
+
+    <!-- 댓글이 특정 메시지 카드에 속하는지 확인 -->
+    <select id="isCommentBelongsToCard" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM Family_cards_comment
+        WHERE comment_id = #{commentId} AND fcid = #{fcid}
+    </select>
+
+    <!-- 댓글이 특정 가족에 속하는지 확인 -->
+    <select id="isCommentBelongsToFamily" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM Family_cards_comment fcc
+        INNER JOIN Family_cards fc ON fcc.fcid = fc.fcid
+        INNER JOIN Users u ON fc.uid = u.uid
+        WHERE fcc.comment_id = #{commentId} AND u.fid = #{fid}
+    </select>
+
+    <!-- ========================================
+         4. 통계 및 기타 정보 조회 쿼리
+         ======================================== -->
+
+    <!-- 사용자별 댓글 작성 개수 조회 -->
+    <select id="getCommentCountByMember" parameterType="long" resultType="map">
+        SELECT
+        u.uid,
+        u.name as userName,
+        u.profile_image as profileImage,
+        COUNT(fcc.comment_id) as commentCount
+        FROM Users u
+        LEFT JOIN Family_cards_comment fcc ON u.uid = fcc.uid
+        LEFT JOIN Family_cards fc ON fcc.fcid = fc.fcid
+        LEFT JOIN Users card_author ON fc.uid = card_author.uid
+        WHERE u.fid = #{fid}
+        AND (fcc.comment_id IS NULL OR card_author.fid = #{fid})
+        GROUP BY u.uid, u.name, u.profile_image
+        ORDER BY commentCount DESC, u.name ASC
+    </select>
+
+    <!-- 메시지 카드별 댓글 개수 조회 -->
+    <select id="getCommentCountByCard" parameterType="long" resultType="map">
+        SELECT
+        fc.fcid,
+        fc.content as cardContent,
+        u.name as cardAuthor,
+        COUNT(fcc.comment_id) as commentCount
+        FROM Family_cards fc
+        INNER JOIN Users u ON fc.uid = u.uid
+        LEFT JOIN Family_cards_comment fcc ON fc.fcid = fcc.fcid
+        WHERE u.fid = #{fid}
+        GROUP BY fc.fcid, fc.content, u.name
+        ORDER BY commentCount DESC, fc.created_at DESC
+    </select>
+
+    <!-- 특정 사용자의 모든 댓글 삭제 (회원 탈퇴용) -->
+    <delete id="deleteCommentsByUserId" parameterType="long">
+        DELETE FROM Family_cards_comment
+        WHERE uid = #{uid}
+    </delete>
+
+    <!-- 가족 전체 댓글 수 조회 -->
+    <select id="getTotalCommentCountByFamily" parameterType="long" resultType="int">
+        SELECT COUNT(fcc.comment_id)
+        FROM Family_cards_comment fcc
+        INNER JOIN Family_cards fc ON fcc.fcid = fc.fcid
+        INNER JOIN Users u ON fc.uid = u.uid
+        WHERE u.fid = #{fid}
+    </select>
+
+    <!-- ========================================
+         5. 배치 처리용 쿼리 (향후 확장)
+         ======================================== -->
+
+    <!-- 특정 기간 이전의 오래된 댓글 조회 -->
+    <select id="getOldComments" resultType="long">
+        SELECT comment_id
+        FROM Family_cards_comment
+        WHERE created_at &lt; DATE_SUB(NOW(), INTERVAL #{days} DAY)
+        ORDER BY created_at ASC
+    </select>
+
+    <!-- 빈 내용의 댓글 조회 (데이터 정리용) -->
+    <select id="getEmptyComments" resultType="long">
+        SELECT comment_id
+        FROM Family_cards_comment
+        WHERE content IS NULL OR TRIM(content) = ''
+    </select>
+
+    <!-- 특정 메시지 카드의 댓글 존재 여부 확인 -->
+    <select id="hasComments" parameterType="long" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM Family_cards_comment
+        WHERE fcid = #{fcid}
+    </select>
+
+    <!-- 댓글 작성자가 해당 가족 구성원인지 확인 -->
+    <select id="isCommentAuthorFamilyMember" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM Family_cards_comment fcc
+        INNER JOIN Users u ON fcc.uid = u.uid
+        WHERE fcc.comment_id = #{commentId} AND u.fid = #{fid}
+    </select>
+
+</mapper>

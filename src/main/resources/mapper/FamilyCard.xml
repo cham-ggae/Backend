@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.familycard.dao.FamilyCardDao">
+
+    <!-- ========================================
+         1. 조회 관련 쿼리
+         ======================================== -->
+
+    <!-- 특정 가족의 모든 메시지 카드 조회 (최신순, 작성자 정보 포함) -->
+    <select id="getFamilyCardsByFamilyId" parameterType="long" resultType="com.example.demo.familycard.dto.FamilyCardResponse">
+        SELECT
+        fc.fcid,
+        fc.uid,
+        u.name as authorName,
+        u.profile_image as authorProfileImage,
+        fc.image as imageType,
+        fc.content,
+        fc.created_at as createdAt
+        FROM Family_cards fc
+        INNER JOIN Users u ON fc.uid = u.uid
+        WHERE u.fid = #{fid}
+        ORDER BY fc.created_at DESC
+    </select>
+
+    <!-- 특정 메시지 카드 상세 조회 (작성자 정보 포함) -->
+    <select id="getFamilyCardById" parameterType="long" resultType="com.example.demo.familycard.dto.FamilyCardResponse">
+        SELECT
+        fc.fcid,
+        fc.uid,
+        u.name as authorName,
+        u.profile_image as authorProfileImage,
+        fc.image as imageType,
+        fc.content,
+        fc.created_at as createdAt
+        FROM Family_cards fc
+        INNER JOIN Users u ON fc.uid = u.uid
+        WHERE fc.fcid = #{fcid}
+    </select>
+
+    <!-- 메시지 카드 기본 정보만 조회 (권한 체크용) -->
+    <select id="getFamilyCardBasicInfo" parameterType="long" resultType="com.example.demo.familycard.dto.FamilyCard">
+        SELECT
+        fcid,
+        uid,
+        image,
+        content,
+        created_at as createdAt
+        FROM Family_cards
+        WHERE fcid = #{fcid}
+    </select>
+
+    <!-- 특정 가족의 메시지 카드 총 개수 조회 -->
+    <select id="getFamilyCardCount" parameterType="long" resultType="int">
+        SELECT COUNT(*)
+        FROM Family_cards fc
+        INNER JOIN Users u ON fc.uid = u.uid
+        WHERE u.fid = #{fid}
+    </select>
+
+    <!-- ========================================
+         2. 생성/수정/삭제 관련 쿼리
+         ======================================== -->
+
+    <!-- 새로운 메시지 카드 생성 -->
+    <insert id="createFamilyCard" parameterType="com.example.demo.familycard.dto.FamilyCard" useGeneratedKeys="true" keyProperty="fcid">
+        INSERT INTO Family_cards (uid, image, content, created_at)
+        VALUES (#{uid}, #{image}, #{content}, NOW())
+    </insert>
+
+    <!-- 메시지 카드 내용 수정 -->
+    <update id="updateFamilyCard">
+        UPDATE Family_cards
+        SET image = #{image}, content = #{content}
+        WHERE fcid = #{fcid}
+    </update>
+
+    <!-- 메시지 카드 삭제 -->
+    <delete id="deleteFamilyCard" parameterType="long">
+        DELETE FROM Family_cards
+        WHERE fcid = #{fcid}
+    </delete>
+
+    <!-- ========================================
+         3. 권한 및 검증 관련 쿼리
+         ======================================== -->
+
+    <!-- 메시지 카드 존재 여부 확인 -->
+    <select id="isFamilyCardExists" parameterType="long" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM Family_cards
+        WHERE fcid = #{fcid}
+    </select>
+
+    <!-- 사용자가 특정 메시지 카드의 작성자인지 확인 -->
+    <select id="isCardOwner" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM Family_cards
+        WHERE fcid = #{fcid} AND uid = #{uid}
+    </select>
+
+    <!-- 메시지 카드가 특정 가족에 속하는지 확인 -->
+    <select id="isCardBelongsToFamily" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM Family_cards fc
+        INNER JOIN Users u ON fc.uid = u.uid
+        WHERE fc.fcid = #{fcid} AND u.fid = #{fid}
+    </select>
+
+    <!-- ========================================
+         4. 통계 및 기타 정보 조회 쿼리
+         ======================================== -->
+
+    <!-- 사용자별 메시지 카드 작성 개수 조회 -->
+    <select id="getCardCountByMember" parameterType="long" resultType="map">
+        SELECT
+        u.uid,
+        u.name as userName,
+        u.profile_image as profileImage,
+        COUNT(fc.fcid) as cardCount
+        FROM Users u
+        LEFT JOIN Family_cards fc ON u.uid = fc.uid
+        WHERE u.fid = #{fid}
+        GROUP BY u.uid, u.name, u.profile_image
+        ORDER BY cardCount DESC, u.name ASC
+    </select>
+
+    <!-- 최근 N개의 메시지 카드 조회 -->
+    <select id="getRecentFamilyCards" resultType="com.example.demo.familycard.dto.FamilyCardResponse">
+        SELECT
+        fc.fcid,
+        fc.uid,
+        u.name as authorName,
+        u.profile_image as authorProfileImage,
+        fc.image as imageType,
+        fc.content,
+        fc.created_at as createdAt
+        FROM Family_cards fc
+        INNER JOIN Users u ON fc.uid = u.uid
+        WHERE u.fid = #{fid}
+        ORDER BY fc.created_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- ========================================
+         5. 배치 처리용 쿼리 (향후 확장)
+         ======================================== -->
+
+    <!-- 특정 기간 이전의 오래된 메시지 카드 조회 -->
+    <select id="getOldFamilyCards" resultType="long">
+        SELECT fcid
+        FROM Family_cards
+        WHERE created_at &lt; DATE_SUB(NOW(), INTERVAL #{days} DAY)
+        ORDER BY created_at ASC
+    </select>
+
+    <!-- 특정 사용자의 모든 메시지 카드 삭제 (회원 탈퇴 시) -->
+    <delete id="deleteFamilyCardsByUserId" parameterType="long">
+        DELETE FROM Family_cards
+        WHERE uid = #{uid}
+    </delete>
+
+</mapper>

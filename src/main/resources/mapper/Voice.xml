@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.voice.dao.VoiceDao">
+
+    <!-- chats 테이블에 채팅 메시지 저장 -->
+    <insert id="insertChat" parameterType="map">
+        INSERT INTO chats (uid, role, content, session_id, created_at)
+        VALUES (#{uid}, #{role}, #{content}, #{sessionId}, NOW());
+    </insert>
+
+    <!-- tts_log 테이블에 변환된 음성 URL 저장 -->
+    <insert id="insertTtsLog" parameterType="map">
+        INSERT INTO tts_log (cid, ttsUrl, created_at)
+        VALUES (#{cid}, #{ttsUrl}, NOW());
+    </insert>
+
+</mapper>

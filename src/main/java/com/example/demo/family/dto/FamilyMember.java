@@ -31,10 +31,11 @@ public class FamilyMember {
 
     /**
      * 사용자 나이
-     * 청소년 할인(19세 미만) 계산에 사용
+     * 카카오 측으로 부터 받아옴 (동의 항목)
+     * 20~29 형태의 문자열
      * NULL 가능 (선택적 입력)
      */
-    private Integer age;
+    private String age;
 
     /**
      * 사용자 성별
@@ -96,7 +97,7 @@ public class FamilyMember {
     private String profileImage;
 
     // 생성자들
-    public FamilyMember(Long uid, String name, Integer age, String gender, LocalDateTime joinDate) {
+    public FamilyMember(Long uid, String name, String age, String gender, LocalDateTime joinDate) {
         this.uid = uid;
         this.name = name;
         this.age = age;

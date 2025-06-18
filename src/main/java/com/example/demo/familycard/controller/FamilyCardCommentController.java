@@ -251,7 +251,7 @@ public class FamilyCardCommentController {
         try {
             // limit 범위 검증
             if (limit < 1 || limit > 10) {
-                limit = 3; // 기본값으로 설정
+                limit = 3;
             }
 
             List<CommentResponse> comments = commentService.getRecentComments(fcid, limit);

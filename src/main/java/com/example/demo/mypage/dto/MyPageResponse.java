@@ -5,6 +5,9 @@ import lombok.Data;
 import java.util.List;
 
 @Data
+/**
+ * MyPageResponse 클래스입니다.
+ */
 public class MyPageResponse {
     private UserInfo userInfo;
     private SurveyResult surveyResult;

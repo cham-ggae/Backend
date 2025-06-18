@@ -8,24 +8,39 @@ import com.example.demo.mypage.mapper.PlanMapper;
 import com.example.demo.mypage.mapper.UserMapper;
 import com.example.demo.surveyResult.dto.SurveyResponseDto;
 import lombok.RequiredArgsConstructor;
+import org.apache.ibatis.javassist.NotFoundException;
+import org.springframework.http.HttpStatus;
+import org.springframework.jmx.export.UnableToRegisterMBeanException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+/**
+ * MyPageService 클래스입니다.
+ */
 public class MyPageService {
     private final UserMapper userMapper;
     private final BugMapper bugMapper;
     private final PlanMapper planMapper;
     private final AuthenticationService authenticationService;
 
-    public MyPageResponse getMyPageInfo() {
+    /**
+     * getMyPageInfo 메서드입니다.
+     * @return 반환값 설명
+     */
+    public MyPageResponse getMyPageInfo() throws NotFoundException {
         Long uid = authenticationService.getCurrentUserId();
-
+        if (uid==null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
+        }
         MyPageResponse.UserInfo userInfo = userMapper.findUserInfoById(uid);
-
+        if (userInfo == null){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"사용자를 찾을 수 없습니다.");
+        };
         MyPageResponse response = new MyPageResponse();
         response.setUserInfo(userInfo);
 
@@ -71,8 +86,6 @@ public class MyPageService {
             }
 
             response.setRecommendHistory(historyList);
-        } else {
-            response.setRecommendHistory(null);
         }
 
         return response;

@@ -24,7 +24,7 @@ import java.util.Map;
  * @since 1.0
  */
 @RestController
-@RequestMapping("/family-space")
+@RequestMapping("/family")
 @Tag(name = "Family Message Cards", description = "가족 메시지 카드 관리 API")
 public class FamilyCardController {
 

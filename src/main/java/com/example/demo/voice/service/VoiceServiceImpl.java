@@ -44,11 +44,7 @@ public class VoiceServiceImpl implements VoiceService {
             String text = googleSttService.transcribeAudio(gcsUri);
 
 
-            // 5. 챗봇에 질문 전달 (응답 db에 저장하는건 아직 구현 안함)
-            chatbotService.streamChatting(text, partial -> {
-                // 응답 스트리밍 콜백 – 지금은 무시하거나, log만 찍기
-                System.out.println("[챗봇 응답 일부]: " + partial);
-            });
+
 
             // 6. 사용자 질문만 응답에 담아 리턴
             return new TranscribedTextResponse(true,

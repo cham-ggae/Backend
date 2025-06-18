@@ -22,7 +22,7 @@ public class SurveyService {
      * @param bugId 설문 결과로 판단된 유형 ID
      */
 
-    public void SurveyResult(int userId, int bugId){
+    public void surveyResult(int userId, int bugId){
 
         // 1. 유저 설문 결과 저장
         surveyMapper.surveyResult(userId, bugId);

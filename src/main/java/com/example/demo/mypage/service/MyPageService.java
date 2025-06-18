@@ -39,7 +39,7 @@ public class MyPageService {
         /**
          * 마이페이지 전체 정보 조회 (기본정보 + 현재 설문 결과 + 추천 요금제 2개)
          */
-    public MyPageResponse getMyPageInfo() throws NotFoundException {
+    public MyPageResponse getMyPageInfo() {
             Long uid = authenticationService.getCurrentUserId();
             if (uid == null) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");

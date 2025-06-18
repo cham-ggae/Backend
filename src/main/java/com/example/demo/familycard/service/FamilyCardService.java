@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static org.threeten.bp.jdk8.Jdk8Methods.safeToInt;
+
 /**
  * 가족 메시지 카드 관련 비즈니스 로직 처리 서비스
  */
@@ -144,7 +146,7 @@ public class FamilyCardService {
     /**
      * 메시지 카드 수정
      *
-     * @param fcid 메시지 카드 ID
+     * @param fcid    메시지 카드 ID
      * @param request 카드 수정 요청
      * @return 수정된 카드 정보
      */
@@ -224,15 +226,18 @@ public class FamilyCardService {
 
     /**
      * 현재 사용자의 가족 ID 조회
-     * 가족에 속하지 않은 경우 예외 발생
      */
     private Long getCurrentUserFamilyId(Long uid) {
-        Integer familyId = Math.toIntExact(familyDao.getUserCurrentFamilyId((long) uid.intValue()));
-        if (familyId == null) {
-            throw new FamilyCardServiceException("가족 스페이스에 가입되어 있지 않습니다.");
+        // Long을 Integer로 안전하게 변환하여 FamilyDao 호출
+        Integer familyIdInt = Math.toIntExact(familyDao.getUserCurrentFamilyId(uid));
+        if (familyIdInt == null) {
+            throw new FamilyCardCommentService.CommentServiceException("가족 스페이스에 가입되어 있지 않습니다.");
         }
-        return familyId.longValue();
+        // Integer를 Long으로 변환하여 반환
+        return familyIdInt.longValue();
     }
+
+
 
     /**
      * 가족 구성원 여부 검증 (더 이상 사용하지 않지만 혹시 필요시를 위해 보존)

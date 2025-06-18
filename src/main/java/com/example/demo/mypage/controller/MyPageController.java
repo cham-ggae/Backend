@@ -1,6 +1,8 @@
 package com.example.demo.mypage.controller;
 
+import com.example.demo.login.service.AuthenticationService;
 import com.example.demo.mypage.dto.MyPageResponse;
+import com.example.demo.mypage.dto.RecommendHistoryData;
 import com.example.demo.mypage.service.MyPageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -12,6 +14,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/mypage")
 @RequiredArgsConstructor
@@ -22,17 +26,30 @@ import org.springframework.web.bind.annotation.RestController;
 public class MyPageController {
 
     private final MyPageService myPageService;
-
-    @GetMapping("/info")
-    @Operation(summary = "사용자 기본 정보 조회", description = "사용자의 이름, 가입일, 프로필 이미지, 설문 결과 유형, 추천 요금제 히스토리 조회")
+    private final AuthenticationService authenticationService;
 
     /**
-     * getMyPage 메서드입니다.
-     * @return 반환값 설명
+     * 전체 마이페이지 정보 조회 API
      */
+    @GetMapping
+    @Operation(summary = "마이페이지 전체 정보", description = "기본정보 + 설문결과 + 추천요금제 히스토리 조회")
 
-    public ResponseEntity<MyPageResponse> getMyPage() throws NotFoundException {
+    public ResponseEntity<MyPageResponse> getMyPageInfo() throws NotFoundException {
         MyPageResponse response = myPageService.getMyPageInfo();
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * 추천 히스토리 전용 API
+     */
+    @GetMapping("/history")
+    @Operation(summary = "추천 요금제 히스토리", description = "과거 추천받은 요금제 조회")
+    public ResponseEntity<List<RecommendHistoryData>> getHistory() {
+        Long userId = authenticationService.getCurrentUserId();
+        List<RecommendHistoryData> history = myPageService.getRecommendHistory(userId);
+        return ResponseEntity.ok(history);
+    }
 }
+
+
+

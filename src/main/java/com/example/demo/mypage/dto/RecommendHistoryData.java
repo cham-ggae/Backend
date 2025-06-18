@@ -6,6 +6,8 @@ import lombok.Data;
 /**
  * RecommendHistoryData 클래스입니다.
  */
+
+//첫번째 추천 요금제
 public class RecommendHistoryData {
     private int planId;
     private String planName;

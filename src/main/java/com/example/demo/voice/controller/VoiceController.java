@@ -42,18 +42,12 @@ public class VoiceController {
         return ResponseEntity.ok(response);
     }
 
-    // TTS 스트리밍
-    @GetMapping(value = "/tts", produces = "audio/mpeg")
-    public ResponseEntity<byte[]> tts(@RequestParam String text) {
-        byte[] mp3Data = voiceService.synthesizeSpeech(text);
+    // TTS 변환 및 스트리밍, 저장
+    @GetMapping(value = "/tts/{cid}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<byte[]> streamTts(@PathVariable int cid) {
+        byte[] audio = voiceService.getTtsAudioByCid(cid);
         return ResponseEntity.ok()
                 .contentType(MediaType.valueOf("audio/mpeg"))
-                .body(mp3Data);
-    }
-
-    // TTS 로그 저장
-    @PostMapping("/tts-log")
-    public ResponseEntity<TtsLogResponse> saveTtsLog(@RequestBody TtsLogRequest request) {
-        return ResponseEntity.ok(voiceService.saveTtsLog(request));
+                .body(audio);
     }
 }

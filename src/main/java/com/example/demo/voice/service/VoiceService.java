@@ -9,9 +9,9 @@ public interface VoiceService {
     // 음성 업로드 처리 및 STT → 챗봇 응답 처리
     TranscribedTextResponse handleAudioUpload(MultipartFile file, Long sessionId, String token);
 
-    // 텍스트를 음성으로 변환하여 byte 배열(mp3)을 반환
-    byte[] synthesizeSpeech(String text);
+    // 텍스트 -> 음성 변환 + 저장
+    TtsLogResponse convertAndLogTts(int cid, String text);
 
-    // TTS 로그 저장
-    TtsLogResponse saveTtsLog(TtsLogRequest request);
+    // 변환된 음성(mp3) 응답
+    byte[] getTtsAudioByCid(int cid);
 }

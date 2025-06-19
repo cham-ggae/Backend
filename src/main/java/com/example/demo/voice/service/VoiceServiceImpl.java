@@ -1,6 +1,8 @@
 package com.example.demo.voice.service;
 
 import com.example.demo.chatbot.service.ChatbotService;
+import com.example.demo.gcs.GcsDownloader;
+import com.example.demo.gcs.GcsUploader;
 import com.example.demo.login.dao.UserDao;
 import com.example.demo.provider.JwtProvider;
 import com.example.demo.voice.dao.VoiceDao;
@@ -13,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +27,8 @@ public class VoiceServiceImpl implements VoiceService {
     private final GoogleSttService googleSttService;
     private final UserDao userDao;
     private final GoogleTtsService googleTtsService;
+    private final GcsUploader gcsUploader;
+    private final GcsDownloader gcsDownloader;
 
     /*
     음성 파일 업로드 및 STT 처리 -> 텍스트 추출 후 챗봇 응답 요청까지
@@ -59,20 +64,40 @@ public class VoiceServiceImpl implements VoiceService {
         }
     }
 
-    /*
-    텍스트를 음성 (MP3 바이트)로 변환
-     */
     @Override
-    public byte[] synthesizeSpeech(String text) {
-        return googleTtsService.synthesizeSpeech(text);
+    public TtsLogResponse convertAndLogTts(int cid, String text) {
+        byte[] mp3Data = googleTtsService.synthesizeSpeech(text);
+
+        //로그 확인용
+        System.out.println("음성파일 길이 : " + mp3Data.length);
+
+        // 1. GCS에 업로드
+        String ttsUrl = gcsUploader.upload(mp3Data, "tts/" + UUID.randomUUID() + ".mp3");
+
+        // 2. DB 저장
+        voiceDao.insertTtsLog(new TtsLogRequest(cid, ttsUrl));
+        return new TtsLogResponse(true, "TTS 저장 완료");
     }
 
-    /*
-    TTS 로그를 DB에 저장
-     */
     @Override
-    public TtsLogResponse saveTtsLog(TtsLogRequest request) {
-        voiceDao.insertTtsLog(request);
-        return new TtsLogResponse(true, "로그 저장 완료");
+    public byte[] getTtsAudioByCid(int cid) {
+        String ttsUrl = voiceDao.findTtsUrlByCid(cid);
+
+        if (ttsUrl == null) {
+            // 1. DB에서 텍스트 가져오기 (예: chats 테이블)
+            String text = voiceDao.findChatTextByCid(cid);
+            if (text == null || text.isBlank()) {
+                throw new RuntimeException("cid에 해당하는 텍스트가 없습니다.");
+            }
+
+            // 2. convertAndLogTts 호출로 생성 & 저장
+            convertAndLogTts(cid, text);
+
+            // 3. 다시 URL 조회
+            ttsUrl = voiceDao.findTtsUrlByCid(cid);
+        }
+
+        return gcsDownloader.download(ttsUrl);
     }
+
 }

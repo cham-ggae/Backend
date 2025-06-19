@@ -12,4 +12,9 @@
     <select id="getFamilyIdByUid" parameterType="long" resultType="long">
         SELECT fid FROM Users WHERE uid = #{uid}
     </select>
+    <update id="decrementNutrientStock">
+        UPDATE Family_space
+        SET nutrial = nutrial - 1
+        WHERE fid = #{fid}
+    </update>
 </mapper>

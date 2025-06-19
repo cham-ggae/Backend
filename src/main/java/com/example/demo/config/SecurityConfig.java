@@ -42,7 +42,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/user/additional-info").authenticated()
 
                         // 기타 모든 요청
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .formLogin(AbstractHttpConfigurer::disable) // 기본 로그인 페이지 비활성화

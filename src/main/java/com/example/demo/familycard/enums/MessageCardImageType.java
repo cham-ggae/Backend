@@ -7,7 +7,11 @@ package com.example.demo.familycard.enums;
 public enum MessageCardImageType {
     HEART("heart", "하트"),
     FLOWER("flower", "꽃"),
-    STAR("star", "별");
+    STAR("star", "별"),
+    GIFT("gift", "선물"),
+    COFFEE("coffee", "커피"),
+    SUN("sun", "해");
+
 
     private final String code;
     private final String description;

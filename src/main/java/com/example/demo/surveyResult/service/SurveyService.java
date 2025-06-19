@@ -39,8 +39,4 @@ public class SurveyService {
     public SurveyResponseDto selectedBugId(int bugId){
         return surveyMapper.selectedBugId(bugId);
     }
-
-    public SurveyResponseDto selectedBugId(int bugId){
-        return surveyMapper.selectedBugId(bugId);
-    }
 }

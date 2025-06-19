@@ -361,8 +361,8 @@ public class FamilyService {
     // ========================================
 
     /**
-     * 가족에서 나가기
-     * 마지막 구성원인 경우 가족 스페이스 자동 삭제
+     * 가족에서 나가기 (외래키 제약조건 고려)
+     * 마지막 구성원인 경우 관련 데이터를 모두 삭제한 후 가족 스페이스 삭제
      *
      * @param uid 탈퇴할 사용자 ID (JWT에서 추출)
      * @param fid 가족 스페이스 ID
@@ -378,10 +378,51 @@ public class FamilyService {
             throw new FamilyServiceException("가족 탈퇴 처리에 실패했습니다.");
         }
 
-        // 가족에 구성원이 없다면 가족 스페이스 삭제
+        // 가족에 구성원이 없다면 관련 데이터를 모두 삭제한 후 가족 스페이스 삭제
         int remainingMembers = familyDao.getFamilyMemberCount(fid);
         if (remainingMembers == 0) {
-            familyDao.deleteFamilySpace(fid);
+            try {
+                // 1. 가족 관련 모든 데이터 삭제 (외래키 순서대로)
+                deleteAllFamilyRelatedData(fid);
+
+                // 2. 마지막으로 가족 스페이스 삭제
+                familyDao.deleteFamilySpace(fid);
+
+                log.info("가족 스페이스 완전 삭제 완료: fid={}", fid);
+
+            } catch (Exception e) {
+                log.error("가족 스페이스 삭제 중 오류 발생: fid={}, error={}", fid, e.getMessage());
+                // 가족 스페이스 삭제 실패 시에도 사용자 탈퇴는 성공으로 처리
+                // (데이터 정합성을 위해 별도 배치 작업으로 정리 가능)
+            }
+        }
+    }
+
+    /**
+     * 가족 관련 모든 데이터 삭제 (외래키 순서 고려)
+     */
+    private void deleteAllFamilyRelatedData(Long fid) {
+        try {
+            // 1. Point_activities 삭제 (Plants를 참조하므로 먼저 삭제)
+            familyDao.deletePointActivitiesByFid(fid);
+
+            // 2. reward_log 삭제 (Plants를 참조하므로 먼저 삭제)
+            familyDao.deleteRewardLogByFid(fid);
+
+            // 3. Plants 삭제 (Family_space를 참조)
+            familyDao.deletePlantsByFid(fid);
+
+            // 4. Family_cards_comment 삭제 (Family_cards를 참조)
+            familyDao.deleteFamilyCardCommentsByFid(fid);
+
+            // 5. Family_cards 삭제 (Family_space와 연관)
+            familyDao.deleteFamilyCardsByFid(fid);
+
+            log.debug("가족 관련 데이터 삭제 완료: fid={}", fid);
+
+        } catch (Exception e) {
+            log.error("가족 관련 데이터 삭제 중 오류: fid={}, error={}", fid, e.getMessage());
+            throw new FamilyServiceException("가족 데이터 정리 중 오류가 발생했습니다.");
         }
     }
 

@@ -289,4 +289,29 @@ public interface FamilyDao {
      */
     Map<String, Object> getPlantCreationStatus(@Param("fid") Long fid);
 
+    /**
+     * 특정 가족의 포인트 활동 기록 삭제
+     */
+    int deletePointActivitiesByFid(@Param("fid") Long fid);
+
+    /**
+     * 특정 가족의 보상 기록 삭제
+     */
+    int deleteRewardLogByFid(@Param("fid") Long fid);
+
+    /**
+     * 특정 가족의 식물 삭제
+     */
+    int deletePlantsByFid(@Param("fid") Long fid);
+
+    /**
+     * 특정 가족의 메시지 카드 댓글 삭제
+     */
+    int deleteFamilyCardCommentsByFid(@Param("fid") Long fid);
+
+    /**
+     * 특정 가족의 메시지 카드 삭제
+     */
+    int deleteFamilyCardsByFid(@Param("fid") Long fid);
+
 }

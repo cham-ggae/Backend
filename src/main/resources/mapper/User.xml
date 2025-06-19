@@ -16,4 +16,16 @@
     <select id="findByEmail">
         select * from Users where email = #{email}
     </select>
+
+    <!-- 카카오 토큰 업데이트 -->
+    <update id="updateKakaoTokens">
+        update Users set kakao_accesstoken = #{kakaoAccessToken}, kakao_refreshtoken = #{kakaoRefreshToken}
+        where email = #{email}
+    </update>
+
+    <!-- 카카오 토큰 삭제 (로그아웃 시) -->
+    <update id="clearKakaoTokens">
+        update Users set kakao_accesstoken = null, kakao_refreshtoken = null
+        where email = #{email}
+    </update>
 </mapper>

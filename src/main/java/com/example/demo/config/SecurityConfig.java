@@ -38,8 +38,11 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-resources/**").permitAll()
                         .requestMatchers("/webjars/**").permitAll()
 
+                        // 사용자 추가 정보 업데이트 엔드포인트 (인증 필요)
+                        .requestMatchers("/api/user/additional-info").authenticated()
+
                         // 기타 모든 요청
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .formLogin(AbstractHttpConfigurer::disable) // 기본 로그인 페이지 비활성화

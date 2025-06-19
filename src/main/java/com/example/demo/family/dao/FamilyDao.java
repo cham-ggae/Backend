@@ -270,4 +270,23 @@ public interface FamilyDao {
      * @return 삭제된 가족 스페이스 수
      */
     int deleteEmptyFamilySpaces();
+
+    /**
+     * 가족의 현재 식물 기본 정보 조회 (레벨, 종류만)
+     * 가족 스페이스 대시보드용 간소화된 정보
+     *
+     * @param fid 가족 스페이스 ID
+     * @return 식물 기본 정보 Map (level, plantType, isCompleted)
+     */
+    Map<String, Object> getCurrentPlantBasicInfo(@Param("fid") Long fid);
+
+    /**
+     * 가족의 식물 생성 가능 여부 확인
+     * 구성원 수와 미완료 식물 존재 여부를 한 번에 체크
+     *
+     * @param fid 가족 스페이스 ID
+     * @return 생성 가능 정보 Map (canCreate, memberCount, hasUncompleted, reason)
+     */
+    Map<String, Object> getPlantCreationStatus(@Param("fid") Long fid);
+
 }

@@ -2,11 +2,16 @@ package com.example.demo.family.service;
 
 import com.example.demo.family.dao.FamilyDao;
 import com.example.demo.family.dto.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.demo.plant.dao.PlantDao;
+import com.example.demo.plant.service.PlantService;
+import com.example.demo.plant.dto.PlantStatusResponseDto;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -14,12 +19,19 @@ import java.util.Random;
  * JWT 기반 인증 및 보안 강화 버전
  *
  */
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 public class FamilyService {
-
     @Autowired
     private FamilyDao familyDao;
+
+    // Plant 관련 의존성 추가
+    @Autowired
+    private PlantDao plantDao;
+
+    @Autowired
+    private PlantService plantService;
 
     // ========================================
     // 1. 가족 스페이스 생성
@@ -225,39 +237,6 @@ public class FamilyService {
         }
     }
 
-    // ========================================
-    // 3. 가족 대시보드 정보 조회
-    // ========================================
-
-    /**
-     * 가족 스페이스 대시보드 정보 조회
-     * 해당 가족의 구성원만 조회 가능
-     *
-     * @param fid 가족 스페이스 ID
-     * @param uid 요청자 사용자 ID (JWT에서 추출)
-     * @return 대시보드 정보
-     */
-    public FamilyDashboardResponse getFamilyDashboard(Long fid, Long uid) {
-        // 1. 권한 체크 - 해당 가족의 구성원인지 확인
-        validateFamilyMember(uid, fid);
-
-        // 2. 가족 기본 정보 조회
-        FamilySpace family = familyDao.getFamilySpaceById(fid);
-        if (family == null) {
-            throw new FamilyServiceException("존재하지 않는 가족 스페이스입니다.");
-        }
-
-        // 3. 가족 구성원 목록 조회
-        List<FamilyMember> members = familyDao.getFamilyMembers(fid);
-
-        // 4. 데이터 사용량 임시 설정 (실제로는 외부 API 연동)
-        setMockDataUsage(members);
-
-        // 5. 할인 정보 계산
-        DiscountInfo discount = calculateFamilyDiscount(family, members);
-
-        return new FamilyDashboardResponse(family, members, discount);
-    }
 
     /**
      * 가족 기본 정보만 조회 (내부 사용)
@@ -488,4 +467,89 @@ public class FamilyService {
             super(message);
         }
     }
+    /**
+     * 가족 스페이스 대시보드 정보 조회 (간소화된 식물 정보 포함)
+     *
+     * @param fid 가족 스페이스 ID
+     * @param uid 요청자 사용자 ID (JWT에서 추출)
+     * @return 대시보드 정보 (간소화된 식물 정보 포함)
+     */
+    public FamilyDashboardResponse getFamilyDashboardWithPlant(Long fid, Long uid) {
+        // 1. 권한 체크
+        validateFamilyMember(uid, fid);
+
+        // 2. 가족 기본 정보 조회
+        FamilySpace family = familyDao.getFamilySpaceById(fid);
+        if (family == null) {
+            throw new FamilyServiceException("존재하지 않는 가족 스페이스입니다.");
+        }
+
+        // 3. 가족 구성원 목록 조회
+        List<FamilyMember> members = familyDao.getFamilyMembers(fid);
+        setMockDataUsage(members); // 임시 데이터 사용량 설정
+
+        // 4. 할인 정보 계산
+        DiscountInfo discount = calculateFamilyDiscount(family, members);
+
+        // 5. 간소화된 식물 정보 생성
+        PlantInfo plantInfo = createSimplePlantInfo(fid);
+
+        // 6. 응답 객체 생성 (4개 매개변수)
+        return new FamilyDashboardResponse(family, members, discount, plantInfo);
+    }
+
+    /**
+     * 간소화된 식물 정보 생성 (기존 검증된 메서드 활용)
+     */
+    private PlantInfo createSimplePlantInfo(Long fid) {
+        try {
+            // 1. 구성원 수 확인 (기존 검증된 메서드 사용)
+            int memberCount = familyDao.getFamilyMemberCount(fid);
+            log.debug("Family {} member count: {}", fid, memberCount);
+
+            if (memberCount < 2) {
+                log.debug("Cannot create plant - insufficient members: {}", memberCount);
+                return PlantInfo.noPlant(false, "가족 구성원이 2명 이상이어야 합니다.");
+            }
+
+            // 2. 미완료 식물 존재 여부 확인 (기존 검증된 메서드 사용)
+            boolean hasUncompletedPlant = false;
+            try {
+                // 기존 PlantDao의 hasUncompletedPlant 메서드 사용
+                hasUncompletedPlant = plantDao.hasUncompletedPlant(fid);
+                log.debug("Family {} has uncompleted plant: {}", fid, hasUncompletedPlant);
+            } catch (Exception e) {
+                log.debug("No uncompleted plant found (normal): {}", e.getMessage());
+                hasUncompletedPlant = false;
+            }
+
+            if (hasUncompletedPlant) {
+                // 3. 기존 식물이 있는 경우 - 기존 PlantService 사용
+                try {
+                    PlantStatusResponseDto plantStatus = plantService.getLatestPlant(fid);
+                    log.debug("Found existing plant: level={}, type={}, completed={}",
+                            plantStatus.getLevel(), plantStatus.getPlantType(), plantStatus.isCompleted());
+
+                    return PlantInfo.hasPlant(
+                            plantStatus.getLevel(),
+                            plantStatus.getPlantType(),
+                            plantStatus.isCompleted() // 완료된 경우만 새로 생성 가능
+                    );
+                } catch (Exception e) {
+                    log.warn("Failed to get plant details, using default: {}", e.getMessage());
+                    return PlantInfo.hasPlant(1, "flower", false);
+                }
+            }
+
+            // 4. 식물이 없고 조건을 만족하는 경우
+            log.debug("Family {} can create new plant", fid);
+            return PlantInfo.canCreateNew();
+
+        } catch (Exception e) {
+            log.error("Error creating plant info for family {}: {}", fid, e.getMessage(), e);
+            // 더 구체적인 에러 메시지 제공
+            return PlantInfo.noPlant(false, "식물 정보를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.");
+        }
+    }
+
 }

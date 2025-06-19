@@ -251,5 +251,72 @@
         WHERE u.fid IS NULL
         )
     </delete>
+    <!-- 가족의 현재 식물 기본 정보 조회 (식물이 없어도 안전) -->
+    <select id="getCurrentPlantBasicInfo" parameterType="long" resultType="map">
+        SELECT
+        p.level,
+        pk.name as plantType,
+        p.is_completed as isCompleted
+        FROM Plants p
+        INNER JOIN Plant_kind pk ON p.kid = pk.kid
+        WHERE p.fid = #{fid}
+        ORDER BY p.created_at DESC
+        LIMIT 1
+    </select>
+
+    <!-- 식물 생성 가능 여부 종합 체크 (항상 결과 반환) -->
+    <select id="getPlantCreationStatus" parameterType="long" resultType="map">
+        SELECT
+        COALESCE((SELECT COUNT(*) FROM Users WHERE fid = #{fid}), 0) as memberCount,
+        COALESCE((SELECT COUNT(*) > 0 FROM Plants WHERE fid = #{fid} AND is_completed = false), false) as hasUncompleted,
+        CASE
+        WHEN COALESCE((SELECT COUNT(*) FROM Users WHERE fid = #{fid}), 0) &lt; 2 THEN '가족 구성원이 2명 이상이어야 합니다.'
+        WHEN COALESCE((SELECT COUNT(*) > 0 FROM Plants WHERE fid = #{fid} AND is_completed = false), false) = true THEN '기존 식물이 아직 완료되지 않았습니다.'
+        ELSE NULL
+        END as reason,
+        CASE
+        WHEN COALESCE((SELECT COUNT(*) FROM Users WHERE fid = #{fid}), 0) &gt;= 2
+        AND COALESCE((SELECT COUNT(*) FROM Plants WHERE fid = #{fid} AND is_completed = false), 0) = 0
+        THEN true
+        ELSE false
+        END as canCreate
+    </select>
+
+    <!-- Family.xml에 추가할 가족 관련 데이터 삭제 쿼리들 -->
+
+    <!-- 특정 가족의 포인트 활동 기록 삭제 -->
+    <delete id="deletePointActivitiesByFid" parameterType="long">
+        DELETE pa FROM Point_activities pa
+        INNER JOIN Plants p ON pa.pid = p.pid
+        WHERE p.fid = #{fid}
+    </delete>
+
+    <!-- 특정 가족의 보상 기록 삭제 -->
+    <delete id="deleteRewardLogByFid" parameterType="long">
+        DELETE rl FROM reward_log rl
+        INNER JOIN Plants p ON rl.pid = p.pid
+        WHERE p.fid = #{fid}
+    </delete>
+
+    <!-- 특정 가족의 식물 삭제 -->
+    <delete id="deletePlantsByFid" parameterType="long">
+        DELETE FROM Plants
+        WHERE fid = #{fid}
+    </delete>
+
+    <!-- 특정 가족의 메시지 카드 댓글 삭제 -->
+    <delete id="deleteFamilyCardCommentsByFid" parameterType="long">
+        DELETE fcc FROM Family_cards_comment fcc
+        INNER JOIN Family_cards fc ON fcc.fcid = fc.fcid
+        INNER JOIN Users u ON fc.uid = u.uid
+        WHERE u.fid = #{fid}
+    </delete>
+
+    <!-- 특정 가족의 메시지 카드 삭제 -->
+    <delete id="deleteFamilyCardsByFid" parameterType="long">
+        DELETE fc FROM Family_cards fc
+        INNER JOIN Users u ON fc.uid = u.uid
+        WHERE u.fid = #{fid}
+    </delete>
 
 </mapper>

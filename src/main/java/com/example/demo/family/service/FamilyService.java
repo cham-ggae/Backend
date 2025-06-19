@@ -2,11 +2,16 @@ package com.example.demo.family.service;
 
 import com.example.demo.family.dao.FamilyDao;
 import com.example.demo.family.dto.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.demo.plant.dao.PlantDao;
+import com.example.demo.plant.service.PlantService;
+import com.example.demo.plant.dto.PlantStatusResponseDto;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -14,12 +19,19 @@ import java.util.Random;
  * JWT 기반 인증 및 보안 강화 버전
  *
  */
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 public class FamilyService {
-
     @Autowired
     private FamilyDao familyDao;
+
+    // Plant 관련 의존성 추가
+    @Autowired
+    private PlantDao plantDao;
+
+    @Autowired
+    private PlantService plantService;
 
     // ========================================
     // 1. 가족 스페이스 생성
@@ -225,39 +237,6 @@ public class FamilyService {
         }
     }
 
-    // ========================================
-    // 3. 가족 대시보드 정보 조회
-    // ========================================
-
-    /**
-     * 가족 스페이스 대시보드 정보 조회
-     * 해당 가족의 구성원만 조회 가능
-     *
-     * @param fid 가족 스페이스 ID
-     * @param uid 요청자 사용자 ID (JWT에서 추출)
-     * @return 대시보드 정보
-     */
-    public FamilyDashboardResponse getFamilyDashboard(Long fid, Long uid) {
-        // 1. 권한 체크 - 해당 가족의 구성원인지 확인
-        validateFamilyMember(uid, fid);
-
-        // 2. 가족 기본 정보 조회
-        FamilySpace family = familyDao.getFamilySpaceById(fid);
-        if (family == null) {
-            throw new FamilyServiceException("존재하지 않는 가족 스페이스입니다.");
-        }
-
-        // 3. 가족 구성원 목록 조회
-        List<FamilyMember> members = familyDao.getFamilyMembers(fid);
-
-        // 4. 데이터 사용량 임시 설정 (실제로는 외부 API 연동)
-        setMockDataUsage(members);
-
-        // 5. 할인 정보 계산
-        DiscountInfo discount = calculateFamilyDiscount(family, members);
-
-        return new FamilyDashboardResponse(family, members, discount);
-    }
 
     /**
      * 가족 기본 정보만 조회 (내부 사용)
@@ -382,8 +361,8 @@ public class FamilyService {
     // ========================================
 
     /**
-     * 가족에서 나가기
-     * 마지막 구성원인 경우 가족 스페이스 자동 삭제
+     * 가족에서 나가기 (외래키 제약조건 고려)
+     * 마지막 구성원인 경우 관련 데이터를 모두 삭제한 후 가족 스페이스 삭제
      *
      * @param uid 탈퇴할 사용자 ID (JWT에서 추출)
      * @param fid 가족 스페이스 ID
@@ -399,10 +378,51 @@ public class FamilyService {
             throw new FamilyServiceException("가족 탈퇴 처리에 실패했습니다.");
         }
 
-        // 가족에 구성원이 없다면 가족 스페이스 삭제
+        // 가족에 구성원이 없다면 관련 데이터를 모두 삭제한 후 가족 스페이스 삭제
         int remainingMembers = familyDao.getFamilyMemberCount(fid);
         if (remainingMembers == 0) {
-            familyDao.deleteFamilySpace(fid);
+            try {
+                // 1. 가족 관련 모든 데이터 삭제 (외래키 순서대로)
+                deleteAllFamilyRelatedData(fid);
+
+                // 2. 마지막으로 가족 스페이스 삭제
+                familyDao.deleteFamilySpace(fid);
+
+                log.info("가족 스페이스 완전 삭제 완료: fid={}", fid);
+
+            } catch (Exception e) {
+                log.error("가족 스페이스 삭제 중 오류 발생: fid={}, error={}", fid, e.getMessage());
+                // 가족 스페이스 삭제 실패 시에도 사용자 탈퇴는 성공으로 처리
+                // (데이터 정합성을 위해 별도 배치 작업으로 정리 가능)
+            }
+        }
+    }
+
+    /**
+     * 가족 관련 모든 데이터 삭제 (외래키 순서 고려)
+     */
+    private void deleteAllFamilyRelatedData(Long fid) {
+        try {
+            // 1. Point_activities 삭제 (Plants를 참조하므로 먼저 삭제)
+            familyDao.deletePointActivitiesByFid(fid);
+
+            // 2. reward_log 삭제 (Plants를 참조하므로 먼저 삭제)
+            familyDao.deleteRewardLogByFid(fid);
+
+            // 3. Plants 삭제 (Family_space를 참조)
+            familyDao.deletePlantsByFid(fid);
+
+            // 4. Family_cards_comment 삭제 (Family_cards를 참조)
+            familyDao.deleteFamilyCardCommentsByFid(fid);
+
+            // 5. Family_cards 삭제 (Family_space와 연관)
+            familyDao.deleteFamilyCardsByFid(fid);
+
+            log.debug("가족 관련 데이터 삭제 완료: fid={}", fid);
+
+        } catch (Exception e) {
+            log.error("가족 관련 데이터 삭제 중 오류: fid={}, error={}", fid, e.getMessage());
+            throw new FamilyServiceException("가족 데이터 정리 중 오류가 발생했습니다.");
         }
     }
 
@@ -488,4 +508,89 @@ public class FamilyService {
             super(message);
         }
     }
+    /**
+     * 가족 스페이스 대시보드 정보 조회 (간소화된 식물 정보 포함)
+     *
+     * @param fid 가족 스페이스 ID
+     * @param uid 요청자 사용자 ID (JWT에서 추출)
+     * @return 대시보드 정보 (간소화된 식물 정보 포함)
+     */
+    public FamilyDashboardResponse getFamilyDashboardWithPlant(Long fid, Long uid) {
+        // 1. 권한 체크
+        validateFamilyMember(uid, fid);
+
+        // 2. 가족 기본 정보 조회
+        FamilySpace family = familyDao.getFamilySpaceById(fid);
+        if (family == null) {
+            throw new FamilyServiceException("존재하지 않는 가족 스페이스입니다.");
+        }
+
+        // 3. 가족 구성원 목록 조회
+        List<FamilyMember> members = familyDao.getFamilyMembers(fid);
+        setMockDataUsage(members); // 임시 데이터 사용량 설정
+
+        // 4. 할인 정보 계산
+        DiscountInfo discount = calculateFamilyDiscount(family, members);
+
+        // 5. 간소화된 식물 정보 생성
+        PlantInfo plantInfo = createSimplePlantInfo(fid);
+
+        // 6. 응답 객체 생성 (4개 매개변수)
+        return new FamilyDashboardResponse(family, members, discount, plantInfo);
+    }
+
+    /**
+     * 간소화된 식물 정보 생성 (기존 검증된 메서드 활용)
+     */
+    private PlantInfo createSimplePlantInfo(Long fid) {
+        try {
+            // 1. 구성원 수 확인 (기존 검증된 메서드 사용)
+            int memberCount = familyDao.getFamilyMemberCount(fid);
+            log.debug("Family {} member count: {}", fid, memberCount);
+
+            if (memberCount < 2) {
+                log.debug("Cannot create plant - insufficient members: {}", memberCount);
+                return PlantInfo.noPlant(false, "가족 구성원이 2명 이상이어야 합니다.");
+            }
+
+            // 2. 미완료 식물 존재 여부 확인 (기존 검증된 메서드 사용)
+            boolean hasUncompletedPlant = false;
+            try {
+                // 기존 PlantDao의 hasUncompletedPlant 메서드 사용
+                hasUncompletedPlant = plantDao.hasUncompletedPlant(fid);
+                log.debug("Family {} has uncompleted plant: {}", fid, hasUncompletedPlant);
+            } catch (Exception e) {
+                log.debug("No uncompleted plant found (normal): {}", e.getMessage());
+                hasUncompletedPlant = false;
+            }
+
+            if (hasUncompletedPlant) {
+                // 3. 기존 식물이 있는 경우 - 기존 PlantService 사용
+                try {
+                    PlantStatusResponseDto plantStatus = plantService.getLatestPlant(fid);
+                    log.debug("Found existing plant: level={}, type={}, completed={}",
+                            plantStatus.getLevel(), plantStatus.getPlantType(), plantStatus.isCompleted());
+
+                    return PlantInfo.hasPlant(
+                            plantStatus.getLevel(),
+                            plantStatus.getPlantType(),
+                            plantStatus.isCompleted() // 완료된 경우만 새로 생성 가능
+                    );
+                } catch (Exception e) {
+                    log.warn("Failed to get plant details, using default: {}", e.getMessage());
+                    return PlantInfo.hasPlant(1, "flower", false);
+                }
+            }
+
+            // 4. 식물이 없고 조건을 만족하는 경우
+            log.debug("Family {} can create new plant", fid);
+            return PlantInfo.canCreateNew();
+
+        } catch (Exception e) {
+            log.error("Error creating plant info for family {}: {}", fid, e.getMessage(), e);
+            // 더 구체적인 에러 메시지 제공
+            return PlantInfo.noPlant(false, "식물 정보를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.");
+        }
+    }
+
 }

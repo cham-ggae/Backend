@@ -29,10 +29,6 @@ public class FamilyController {
     @Autowired
     private AuthenticationService authService;
 
-    // ========================================
-    // 1. 가족 스페이스 생성
-    // ========================================
-
     /**
      * 새로운 가족 스페이스 생성
      * JWT 토큰에서 사용자 정보를 자동으로 추출하여 처리
@@ -79,9 +75,6 @@ public class FamilyController {
         }
     }
 
-    // ========================================
-    // 2. 가족 스페이스 참여 (초대 코드)
-    // ========================================
 
     /**
      * 초대 코드로 가족 스페이스 참여
@@ -128,53 +121,6 @@ public class FamilyController {
         }
     }
 
-    // ========================================
-    // 3. 가족 대시보드 조회
-    // ========================================
-
-    /**
-     * 가족 스페이스 대시보드 정보 조회
-     * JWT 토큰으로 권한을 확인한 후 대시보드 정보를 반환
-     */
-    @GetMapping("/{fid}")
-    @Operation(
-            summary = "가족 대시보드 조회",
-            description = "가족 스페이스의 모든 정보(구성원, 할인 정보 등)를 조회합니다. 해당 가족의 구성원만 조회 가능합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "조회 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요"),
-            @ApiResponse(responseCode = "403", description = "해당 가족의 구성원이 아님"),
-            @ApiResponse(responseCode = "404", description = "가족 스페이스가 존재하지 않음")
-    })
-    public ResponseEntity<FamilyDashboardResponse> getFamilyDashboard(
-            @Parameter(description = "가족 스페이스 ID", required = true, example = "1")
-            @PathVariable Long fid) {
-
-        try {
-            // JWT 토큰에서 현재 인증된 사용자 ID 획득
-            Long currentUserId = authService.getCurrentUserId();
-
-            FamilyDashboardResponse response = familyService.getFamilyDashboard(fid, currentUserId);
-            return ResponseEntity.ok(response);
-
-        } catch (AuthenticationService.AuthenticationException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-
-        } catch (FamilyService.FamilyAccessDeniedException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-
-        } catch (FamilyService.FamilyServiceException e) {
-            return ResponseEntity.notFound().build();
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    // ========================================
-    // 4. 초대 코드 검증
-    // ========================================
 
     /**
      * 초대 코드 유효성 검증
@@ -292,89 +238,68 @@ public class FamilyController {
         }
     }
 
-    // ========================================
-    // 7. 현재 사용자의 가족 정보 조회
-    // ========================================
+    // FamilyController.java - 메서드명과 설명만 업데이트
 
     /**
-     * 현재 사용자가 속한 가족 정보 조회
-     * JWT 토큰으로 사용자를 식별하여 해당 사용자의 가족 정보를 반환
+     * 현재 사용자가 속한 가족 정보 조회 (간소화된 식물 정보 포함)
      */
     @GetMapping()
     @Operation(
-            summary = "내 가족 정보 조회",
-            description = "현재 로그인한 사용자가 속한 가족의 기본 정보를 조회합니다."
+            summary = "내 가족 정보 조회 (간소화된 식물 정보 포함)",
+            description = "현재 로그인한 사용자가 속한 가족의 기본 정보와 식물의 레벨, 종류, 생성 여부를 조회합니다."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
             @ApiResponse(responseCode = "204", description = "가족에 속해있지 않음"),
             @ApiResponse(responseCode = "401", description = "인증 필요")
     })
-    public ResponseEntity<FamilyDashboardResponse> getMyFamily() {
-
+    public ResponseEntity<FamilyDashboardResponse> getMyFamilyWithPlant() {
         try {
-            // JWT 토큰에서 현재 인증된 사용자 ID 획득
             Long currentUserId = authService.getCurrentUserId();
-
-            // 사용자가 속한 가족 ID 조회
             Long userFamilyId = familyService.getUserCurrentFamilyId(currentUserId);
 
             if (userFamilyId == null) {
-                return ResponseEntity.noContent().build(); // 가족에 속해있지 않음
+                return ResponseEntity.noContent().build();
             }
 
-            FamilyDashboardResponse response = familyService.getFamilyDashboard(userFamilyId, currentUserId);
+            FamilyDashboardResponse response = familyService.getFamilyDashboardWithPlant(userFamilyId, currentUserId);
             return ResponseEntity.ok(response);
 
         } catch (AuthenticationService.AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    // ========================================
-    // 8. 현재 사용자의 가족 상태 확인
-    // ========================================
-
     /**
-     * 현재 사용자의 가족 가입 상태 확인
-     * 프론트엔드에서 UI 분기 처리에 사용
+     * 가족 스페이스 대시보드 정보 조회 (간소화된 식물 정보 포함)
      */
-    @GetMapping("/my-status")
+    @GetMapping("/{fid}")
     @Operation(
-            summary = "내 가족 상태 확인",
-            description = "현재 로그인한 사용자의 가족 가입 상태를 확인합니다."
+            summary = "가족 대시보드 조회 (간소화된 식물 정보 포함)",
+            description = "가족 스페이스의 기본 정보와 식물의 레벨, 종류, 생성 여부를 조회합니다."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "상태 조회 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 필요")
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "해당 가족의 구성원이 아님"),
+            @ApiResponse(responseCode = "404", description = "가족 스페이스가 존재하지 않음")
     })
-    public ResponseEntity<FamilyStatusResponse> getMyFamilyStatus() {
-
+    public ResponseEntity<FamilyDashboardResponse> getFamilyDashboardWithPlant(
+            @Parameter(description = "가족 스페이스 ID", required = true, example = "1")
+            @PathVariable Long fid) {
         try {
-            // JWT 토큰에서 현재 인증된 사용자 ID 획득
             Long currentUserId = authService.getCurrentUserId();
-
-            // 사용자가 속한 가족 ID 조회
-            Long userFamilyId = familyService.getUserCurrentFamilyId(currentUserId);
-
-            FamilyStatusResponse response = new FamilyStatusResponse();
-            response.setHasFamily(userFamilyId != null);
-            response.setFamilyId(userFamilyId);
-
-            if (userFamilyId != null) {
-                // 가족 기본 정보도 함께 제공
-                FamilySpace family = familyService.getFamilyBasicInfo(userFamilyId);
-                response.setFamilyName(family != null ? family.getName() : null);
-            }
-
+            FamilyDashboardResponse response = familyService.getFamilyDashboardWithPlant(fid, currentUserId);
             return ResponseEntity.ok(response);
 
         } catch (AuthenticationService.AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-
+        } catch (FamilyService.FamilyAccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (FamilyService.FamilyServiceException e) {
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }

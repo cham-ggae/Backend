@@ -11,6 +11,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.ModelAttribute;
 
 import java.util.List;
 
@@ -32,7 +34,7 @@ public class PointController {
     })
     public ResponseEntity<String> addPoint(
             @Parameter(description = "활동 요청 데이터", required = true)
-            @RequestBody AddPointRequestDto request) {
+            @ModelAttribute AddPointRequestDto request) {
         Long uid = authenticationService.getCurrentUserId();
         pointService.addPoint(uid, request.getActivityType());
         return ResponseEntity.ok("포인트 적립 완료");

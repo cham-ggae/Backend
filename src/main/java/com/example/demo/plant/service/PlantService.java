@@ -15,7 +15,7 @@ public class PlantService {
 
     private final PlantDao plantDao;
     private final PointService pointService;
-
+    // 1. 새로운 식물 반환
     public void createPlant(Long uid, String plantType) {
         Long fid = plantDao.getUserFid(uid);
 
@@ -30,7 +30,8 @@ public class PlantService {
         int kid = plantDao.getPlantKindId(plantType);
         plantDao.insertPlant(fid, kid);
     }
-    // 식물 조회 값에 대한 반환 // dto 참고
+
+    // 2. 식물 조회 값에 대한 반환 // dto 참고
     public PlantStatusResponseDto getLatestPlant(Long fid) {
         PlantStatusResponseDto dto = plantDao.selectLatestPlantByFid(fid);
 
@@ -50,7 +51,7 @@ public class PlantService {
         List<Integer> rewardIds = List.of(1, 2, 3, 4);
         return rewardIds.get((int) (Math.random() * rewardIds.size()));
     }
-
+    // 3. 완료된 식물에 대한 보상
     public RewardHistoryDto claimReward(Long uid) {
         Long fid = plantDao.getUserFid(uid);
         Long pid = plantDao.getLatestPlantId(fid);
@@ -58,7 +59,7 @@ public class PlantService {
         if (!plantDao.isPlantCompleted(pid)) {
             throw new PlantNotCompletedException("아직 완료되지 않은 식물입니다.");
         }
-
+        // 보상은 가족당 단 한번!!
         if (plantDao.hasAlreadyClaimedReward(uid, pid)) {
             throw new RewardAlreadyClaimedException("이미 보상을 수령한 식물입니다.");
         }
@@ -70,7 +71,7 @@ public class PlantService {
         // 보상 이름 및 설명 조회
         return plantDao.getRewardInfoById(rewardId);
     }
-
+    // 4. 보상 수령 이력
     public List<RewardHistoryDto> getRewardHistory(Long uid) {
         return plantDao.getRewardHistory(uid);
     }

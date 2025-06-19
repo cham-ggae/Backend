@@ -26,6 +26,7 @@ public class PointService {
 
     private final PointDao pointDao;
     private final AuthenticationService authService;
+    private final NutrientService nutrientService;
 
     // 활동 적용 시 자동완료를 위한 메서드
     public boolean checkActivityExists(Long uid, String type) {
@@ -47,6 +48,10 @@ public class PointService {
     //활동에 따른 포인트 적립 및 경험치 처리
     @Transactional
     public void addPoint(Long uid, String activityType) {
+        // 영양제 사용시 영양제 1개 차감
+        if (activityType.equals("nutrient")) {
+            nutrientService.useNutrient(uid);
+        }
 
         // 활동 1일 1회 제한
         if (pointDao.checkActivityExists(uid, activityType)) {

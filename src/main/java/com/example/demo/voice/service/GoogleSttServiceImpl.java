@@ -1,5 +1,6 @@
 package com.example.demo.voice.service;
 
+import com.example.demo.gcs.GcsUploader;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.speech.v1.*;
 import com.google.cloud.storage.BlobInfo;
@@ -29,9 +30,11 @@ public class GoogleSttServiceImpl implements GoogleSttService {
     private String bucketName;
 
     private final ResourceLoader resourceLoader;
+    private final GcsUploader gcsUploader;
 
-    public GoogleSttServiceImpl(ResourceLoader resourceLoader) {
+    public GoogleSttServiceImpl(ResourceLoader resourceLoader, GcsUploader gcsUploader) {
         this.resourceLoader = resourceLoader;
+        this.gcsUploader = gcsUploader;
     }
 
     // GCS에 업로드하고 URI 반환
@@ -39,27 +42,10 @@ public class GoogleSttServiceImpl implements GoogleSttService {
     public String uploadFileToGCS(MultipartFile file) {
         try {
             File wavFile = convertToLinear16Wav(file);
-
-            Resource resource = resourceLoader.getResource(credentialsPath);
-            InputStream credentialsStream = resource.getInputStream();
-            GoogleCredentials credentials = GoogleCredentials.fromStream(credentialsStream);
-
-            Storage storage = StorageOptions.newBuilder()
-                    .setCredentials(credentials)
-                    .build()
-                    .getService();
-
             String fileName = "audio/" + UUID.randomUUID() + "-" + file.getOriginalFilename();
-            BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, fileName)
-                    .setContentType("audio/wav")
-                    .build();
-
-            storage.create(blobInfo, Files.readAllBytes(wavFile.toPath()));
-
-            return String.format("gs://%s/%s", bucketName, fileName);
+            return gcsUploader.upload(wavFile, fileName);
         } catch (Exception e) {
-            log.error("GCS 파일 업로드 실패", e);
-            throw new RuntimeException("GCS 파일 업로드 실패");
+            throw new RuntimeException("STT용 GCS 업로드 실패", e);
         }
     }
 

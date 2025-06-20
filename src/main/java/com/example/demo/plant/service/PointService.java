@@ -2,8 +2,8 @@ package com.example.demo.plant.service;
 
 import com.example.demo.login.service.AuthenticationService;
 import com.example.demo.plant.dao.PointDao;
-import com.example.demo.plant.websocket.WaterWebSocketHandler;
-import com.example.demo.plant.websocket.dto.WaterEventData;
+import com.example.demo.plant.websocket.PlantWebSocketHandler;
+import com.example.demo.plant.websocket.dto.PlantEventData;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,8 +36,8 @@ public class PointService {
     // 활동 유형별로 부여할 포인트 값을 매핑
     private final Map<String, Integer> activityPointMap = Map.of(
             "attendance", 5,
-            "water", 5,
-            "nutrient", 10,
+            "water", 300,
+            "nutrient", 300,
             "emotion", 10,
             "quiz", 10,
             "lastleaf", 10,
@@ -94,41 +94,49 @@ public class PointService {
         // 현재 식물 레벨 및 가족 구성원 수 기반으로 레벨업 조건 계산
         int level = pointDao.getPlantLevel(pid);
         int required = getExpThreshold(memberCount, level);
+        boolean isLevelUp = false;
 
         // 레벨업 조건 만족 시 → 레벨업 처리 및 경험치 초기화
         if (updatedExp >= required) {
             pointDao.levelUp(pid);
             pointDao.updateExperience(pid, 0); // 경험치 리셋
+            isLevelUp = true;
         }
 
-        // 물주기일 경우 WebSocket 브로드캐스트 전송 및 영양제 증가 체크
-        if (activityType.equals("water")) {
-            try {
-                String name = pointDao.getUserName(uid);
-                String avatarUrl = pointDao.getUserProfile(uid);
+        // ✅ 모든 활동에 대해 WebSocket 실시간 반영
+        try {
+            String name = pointDao.getUserName(uid);
+            String avatarUrl = pointDao.getUserProfile(uid);
 
-                WaterEventData event = new WaterEventData();
-                event.setFid(fid);
-                event.setUid(uid);
-                event.setName(name);
-                event.setAvatarUrl(avatarUrl);
+            PlantEventData event = new PlantEventData();
+            event.setType(activityType);
+            event.setFid(fid);
+            event.setUid(uid);
+            event.setName(name);
+            event.setAvatarUrl(avatarUrl);
+            event.setLevel(level + (isLevelUp ? 1 : 0));
+            event.setExperiencePoint(isLevelUp ? 0 : updatedExp);
+            event.setExpThreshold(required);
+            event.setLevelUp(isLevelUp);
 
-                String json = new ObjectMapper().writeValueAsString(event);
-                for (WebSocketSession s : WaterWebSocketHandler.sessions) {
-                    if (s.isOpen()) {
-                        s.sendMessage(new TextMessage(json));
-                    }
+            String json = new ObjectMapper().writeValueAsString(event);
+            for (WebSocketSession s : PlantWebSocketHandler.sessions) {
+                if (s.isOpen()) {
+                    s.sendMessage(new TextMessage(json));
                 }
+            }
 
+            // ✅ water일 경우 영양제 추가 확인
+            if (activityType.equals("water")) {
                 Date today = Date.valueOf(LocalDate.now());
                 int watered = pointDao.countWateredMembersToday(fid, today);
                 if (memberCount == watered) {
                     pointDao.incrementNutrient(fid);
                 }
-
-            } catch (Exception e) {
-                log.warn("WebSocket 에러: {}", e.getMessage());
             }
+
+        } catch (Exception e) {
+            log.warn("WebSocket 브로드캐스트 에러: {}", e.getMessage());
         }
     }
 
@@ -151,5 +159,9 @@ public class PointService {
     public List<Long> getWateredMembers(Long fid) {
         Date today = Date.valueOf(LocalDate.now());
         return pointDao.getTodayWateredUids(fid, today);
+    }
+
+    public int getPlantLevel(Long pid) {
+        return pointDao.getPlantLevel(pid);
     }
 }

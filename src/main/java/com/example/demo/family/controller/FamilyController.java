@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,7 +34,10 @@ public class FamilyController {
      * 새로운 가족 스페이스 생성
      * JWT 토큰에서 사용자 정보를 자동으로 추출하여 처리
      */
-    @PostMapping
+    @PostMapping(
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
     @Operation(
             summary = "가족 스페이스 생성",
             description = "새로운 가족 스페이스를 생성하고 요청자를 첫 번째 구성원으로 등록합니다. JWT 토큰으로 사용자를 식별합니다. combitype \"투게더 결합\", \"참쉬운 가족 결합\", "
@@ -80,7 +84,11 @@ public class FamilyController {
      * 초대 코드로 가족 스페이스 참여
      * JWT 토큰에서 사용자 정보를 자동으로 추출하여 처리
      */
-    @PostMapping("/join")
+    @PostMapping(
+        value = "/join",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
     @Operation(
             summary = "가족 스페이스 참여",
             description = "초대 코드를 통해 기존 가족 스페이스에 참여합니다. JWT 토큰으로 사용자를 식별합니다."

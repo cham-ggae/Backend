@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,7 +32,10 @@ public class PlantController {
      * @param request plantType (flower/tree)
      * @return 성공 메시지
      */
-    @PostMapping
+    @PostMapping(
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
     @Operation(summary = "새 식물 생성", description = "새싹을 생성합니다. 조건: 가족 구성원 ≥ 2명 && (기존 식물 없음 또는 완료된 상태) / flower ,tree 선택")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "새싹 생성 성공"),
@@ -59,7 +63,10 @@ public class PlantController {
      * 현재 사용자 기준 보상 수령
      * @return 완료 메시지
      */
-    @PostMapping("/claim-reward")
+    @PostMapping(
+        value = "/claim-reward",
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
     @Operation(summary = "보상 수령", description = "성장 완료된 식물에 대해 보상을 수령합니다.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "보상 수령 성공"),

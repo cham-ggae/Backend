@@ -6,6 +6,7 @@ import com.example.demo.surveyResult.service.SurveyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,7 +29,11 @@ public class SurveyController {
      * @param bugId 설문 결과 유형 ID (form-data 방식으로 전달)
      * @return 저장 성공 메시지
      */
-    @PostMapping("/surveyResult")
+    @PostMapping(
+        value = "/surveyResult",
+        consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
     @Operation(summary = "설문 유형 결과 저장", description = "설문 후 유형 결과 DB에 저장")
     public ResponseEntity<?> surveyResult(@RequestParam("bugId") int bugId) {
         Long currentUserId = authenticationService.getCurrentUserId(); // 현재 로그인 사용자 ID 조회

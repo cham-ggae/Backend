@@ -27,10 +27,16 @@
     </insert>
 
     <select id="selectLatestPlantByFid" parameterType="long" resultType="com.example.demo.plant.dto.PlantStatusResponseDto">
-        SELECT p.level, p.experience_point, p.is_completed, k.name AS plantType
-        FROM Plants p JOIN Plant_kind k ON p.kid = k.kid
+        SELECT
+        p.level,
+        p.experience_point AS experiencePoint,
+        p.is_completed AS completed,
+        k.name AS plantType
+        FROM Plants p
+        JOIN Plant_kind k ON p.kid = k.kid
         WHERE p.fid = #{fid}
-        ORDER BY p.created_at DESC LIMIT 1
+        ORDER BY p.created_at DESC
+        LIMIT 1
     </select>
 
     <select id="getLatestPlantId" parameterType="long" resultType="long">

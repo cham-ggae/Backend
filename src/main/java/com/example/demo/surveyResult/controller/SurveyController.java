@@ -2,7 +2,6 @@ package com.example.demo.surveyResult.controller;
 
 import com.example.demo.login.service.AuthenticationService;
 import com.example.demo.surveyResult.dto.SurveyResponseDto;
-import com.example.demo.surveyResult.dto.SurveyResultDto;
 import com.example.demo.surveyResult.service.SurveyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,14 +25,14 @@ public class SurveyController {
 
     /**
      * 인증된 사용자의 설문 결과를 저장합니다.
-     * @param dto bugId만 포함된 설문 결과 DTO
+     * @param bugId 설문 결과 유형 ID (form-data 방식으로 전달)
      * @return 저장 성공 메시지
      */
     @PostMapping("/surveyResult")
     @Operation(summary = "설문 유형 결과 저장", description = "설문 후 유형 결과 DB에 저장")
-    public ResponseEntity<?> surveyResult(@RequestBody SurveyResultDto dto) {
+    public ResponseEntity<?> surveyResult(@RequestParam("bugId") int bugId) {
         Long currentUserId = authenticationService.getCurrentUserId(); // 현재 로그인 사용자 ID 조회
-        surveyService.SurveyResult(currentUserId.intValue(), dto.getBugId()); // ID 직접 주입
+        surveyService.surveyResult(currentUserId.intValue(), bugId); // ID 직접 주입
         return ResponseEntity.ok("설문 결과 저장 완료");
     }
 

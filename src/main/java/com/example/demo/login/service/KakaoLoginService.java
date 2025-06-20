@@ -15,6 +15,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.sql.SQLException;
@@ -32,6 +33,8 @@ public class KakaoLoginService implements KakaoLogin {
     /** 카카오 API 호출용 RestTemplate */
     private final RestTemplate restTemplate;
     private final UserDao userDao;
+    private final AuthenticationService authenticationService;
+
     /** 카카오 API 클라이언트 ID (형상관리) */
     @Value("${kakao.client-id}")
     private String clientId;
@@ -40,6 +43,7 @@ public class KakaoLoginService implements KakaoLogin {
     private String redirectUri;
 
     private static final long REFRESH_VALIDITY = 1000L * 60 * 60 * 24 * 14;
+
     /**
      * 카카오 인가 코드를 사용해 액세스 토큰과 리프레시 토큰을 요청하고,
      * 사용자 정보를 조회하여 {@link KakaoUserInfo}에 담아 반환.
@@ -69,13 +73,13 @@ public class KakaoLoginService implements KakaoLogin {
         );
 
         //  카카오 인증 서버로부터 토큰 응답 수신
-        String accessToken = (String) response.getBody().get("access_token");
-        String refreshToken = (String) response.getBody().get("refresh_token");
+        String kakaoAccessToken = (String) response.getBody().get("access_token");
+        String kakaoRefreshToken = (String) response.getBody().get("refresh_token");
         Long refreshExpiresIn = ((Number) response.getBody().get("refresh_token_expires_in")).longValue();
 
         // 액세스 토큰으로 사용자 정보 조회
         HttpHeaders userInfoHeaders = new HttpHeaders();
-        userInfoHeaders.setBearerAuth(accessToken);
+        userInfoHeaders.setBearerAuth(kakaoAccessToken);
         HttpEntity<?> userInfoRequest = new HttpEntity<>(userInfoHeaders);
 
         ResponseEntity<Map> userInfoResponse = restTemplate.exchange(
@@ -93,20 +97,18 @@ public class KakaoLoginService implements KakaoLogin {
 
         String nickname = null;
         String profileImageUrl = null;
-        String thumbnailUrl = null;
 
         if (profileMap != null) {
-            nickname       = (String) profileMap.get("nickname");
+            nickname = (String) profileMap.get("nickname");
             profileImageUrl = (String) profileMap.get("profile_image_url");
-            thumbnailUrl    = (String) profileMap.get("thumbnail_image_url");
         }
 
-// 3) optional 필드: 동의 여부 체크 후 파싱
-        String gender    = null;
-        String ageRange  = null;
+        // 3) optional 필드: 동의 여부 체크 후 파싱
+        String gender = null;
+        String ageRange = null;
 
-        Boolean hasGender    = (Boolean) kakaoAccount.getOrDefault("has_gender", false);
-        Boolean hasAgeRange  = (Boolean) kakaoAccount.getOrDefault("has_age_range", false);
+        Boolean hasGender = (Boolean) kakaoAccount.getOrDefault("has_gender", false);
+        Boolean hasAgeRange = (Boolean) kakaoAccount.getOrDefault("has_age_range", false);
 
         if (hasGender) {
             gender = (String) kakaoAccount.get("gender");
@@ -117,35 +119,81 @@ public class KakaoLoginService implements KakaoLogin {
 
         User isMember = userDao.findByEmail(email);
         if (isMember == null) {
-            userDao.joinMembership(email, accessToken, refreshToken, gender, ageRange, nickname, profileImageUrl);
+            userDao.joinMembership(email, kakaoAccessToken, kakaoRefreshToken, gender, ageRange, nickname, profileImageUrl);
+        } else {
+            // 기존 사용자의 카카오 토큰 업데이트
+            userDao.updateKakaoTokens(email, kakaoAccessToken, kakaoRefreshToken);
         }
+
         String newAccessToken = jwtProvider.createAccessToken(email);
         String newRefreshToken = jwtProvider.createRefreshToken(email);
+
         // 사용자 정보 및 토큰을 DTO로 반환
         return new KakaoUserInfo(email, nickname, newAccessToken, newRefreshToken, refreshExpiresIn);
     }
 
     @Override
     public KakaoLogoutRes handleKakaoLogout(String authorization, HttpServletResponse response) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", authorization);
+        try {
+            // 1. 현재 인증된 사용자 정보 가져오기
+            String currentUserEmail = authenticationService.getCurrentUserEmail();
+            User user = userDao.findByEmail(currentUserEmail);
 
-        HttpEntity<Void> request = new HttpEntity<>(headers);
-        ResponseEntity<Map> kakaoResp = restTemplate.postForEntity(
-                "https://kapi.kakao.com/v1/user/logout",
-                request, Map.class
-        );
+            if (user == null) {
+                log.warn("사용자를 찾을 수 없습니다. email: {}", currentUserEmail);
+                throw new RuntimeException("사용자를 찾을 수 없습니다.");
+            }
 
-        Cookie tokenCookie = new Cookie("refreshToken", null);
-        tokenCookie.setHttpOnly(true);
-        tokenCookie.setSecure(true);
-        tokenCookie.setPath("/");
-        tokenCookie.setMaxAge(0);
-        response.addCookie(tokenCookie);
+            // 2. 카카오 로그아웃 처리 (카카오 액세스 토큰 사용)
+            Long kakaoUserId = null;
+            if (user.getKakao_accesstoken() != null && !user.getKakao_accesstoken().trim().isEmpty()) {
+                try {
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setBearerAuth(user.getKakao_accesstoken()); // 카카오 토큰 사용
 
-        Number idNum = (Number) kakaoResp.getBody().get("id");
-        Long id = idNum == null ? null : idNum.longValue();
-        return new KakaoLogoutRes(id, "카카오 로그아웃 완료");
+                    HttpEntity<Void> request = new HttpEntity<>(headers);
+                    ResponseEntity<Map> kakaoResp = restTemplate.postForEntity(
+                            "https://kapi.kakao.com/v1/user/logout",
+                            request, Map.class
+                    );
+
+                    Number idNum = (Number) kakaoResp.getBody().get("id");
+                    kakaoUserId = idNum == null ? null : idNum.longValue();
+
+                    log.info("카카오 로그아웃 성공. kakaoUserId: {}", kakaoUserId);
+
+                } catch (RestClientException e) {
+                    log.warn("카카오 로그아웃 API 호출 실패 (토큰 만료 가능): {}", e.getMessage());
+                    // 카카오 API 호출이 실패해도 우리 서비스 로그아웃은 계속 진행
+                }
+            } else {
+                log.warn("사용자의 카카오 액세스 토큰이 없습니다. email: {}", currentUserEmail);
+            }
+
+            // 3. 우리 서비스 로그아웃 처리
+            // 리프레시 토큰 쿠키 삭제
+            Cookie tokenCookie = new Cookie("refreshToken", null);
+            tokenCookie.setHttpOnly(true);
+            tokenCookie.setSecure(true);
+            tokenCookie.setPath("/");
+            tokenCookie.setMaxAge(0);
+            response.addCookie(tokenCookie);
+
+            // 4. DB에서 카카오 토큰 삭제
+            userDao.clearKakaoTokens(currentUserEmail);
+
+            return new KakaoLogoutRes(kakaoUserId, "로그아웃 완료");
+
+        } catch (SQLException e) {
+            log.error("로그아웃 처리 중 DB 오류 발생", e);
+            throw new RuntimeException("로그아웃 처리 중 오류가 발생했습니다.", e);
+        } catch (AuthenticationService.AuthenticationException e) {
+            log.error("인증되지 않은 사용자의 로그아웃 시도", e);
+            throw new RuntimeException("인증되지 않은 사용자입니다.", e);
+        } catch (Exception e) {
+            log.error("로그아웃 처리 중 예상치 못한 오류 발생", e);
+            throw new RuntimeException("로그아웃 처리 중 오류가 발생했습니다.", e);
+        }
     }
 
     @Override
@@ -178,8 +226,8 @@ public class KakaoLoginService implements KakaoLogin {
         }
 
         // 3) 새 토큰 발급
-        String email           = jwtProvider.getEmail(oldRefresh);
-        String newAccessToken  = jwtProvider.createAccessToken(email);
+        String email = jwtProvider.getEmail(oldRefresh);
+        String newAccessToken = jwtProvider.createAccessToken(email);
         String newRefreshToken = jwtProvider.createRefreshToken(email);
 
         // 4) 새 refreshToken 쿠키로 교체

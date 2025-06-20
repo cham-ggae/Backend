@@ -2,35 +2,47 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<!-- namespace는 패키지 포함한 mapper(DAO interface) 이름으로 설정 한다. -->
 <mapper namespace="com.example.demo.plant.dao.PlantDao">
 
+    <!-- ✅ RewardHistoryDto 매핑을 위한 resultMap -->
+    <resultMap id="RewardMap" type="com.example.demo.plant.dto.RewardHistoryDto">
+        <result column="reward_name" property="rewardName"/>
+        <result column="description" property="description"/>
+        <result column="received_at" property="receivedAt"/>
+    </resultMap>
+
+    <!-- 사용자 가족 ID 조회 -->
     <select id="getUserFid" parameterType="long" resultType="long">
         SELECT fid FROM Users WHERE uid = #{uid}
     </select>
 
+    <!-- 가족 구성원 수 조회 -->
     <select id="selectFamilyMemberCount" parameterType="long" resultType="int">
         SELECT COUNT(*) FROM Users WHERE fid = #{fid}
     </select>
 
+    <!-- 완료되지 않은 식물 존재 여부 -->
     <select id="hasUncompletedPlant" parameterType="long" resultType="boolean">
         SELECT COUNT(*) > 0 FROM Plants WHERE fid = #{fid} AND is_completed = false
     </select>
 
+    <!-- 식물 종류 ID 조회 -->
     <select id="getPlantKindId" parameterType="string" resultType="int">
         SELECT kid FROM Plant_kind WHERE name = #{type}
     </select>
 
+    <!-- 식물 등록 -->
     <insert id="insertPlant">
         INSERT INTO Plants(fid, kid, level, experience_point, is_completed)
         VALUES(#{fid}, #{kid}, 1, 0, false)
     </insert>
 
+    <!-- 가장 최근 식물 상태 조회 -->
     <select id="selectLatestPlantByFid" parameterType="long" resultType="com.example.demo.plant.dto.PlantStatusResponseDto">
         SELECT
         p.level,
         p.experience_point AS experiencePoint,
-        p.is_completed AS completed,
+        p.is_completed AS isCompleted,
         k.name AS plantType
         FROM Plants p
         JOIN Plant_kind k ON p.kid = k.kid
@@ -39,34 +51,51 @@
         LIMIT 1
     </select>
 
+    <!-- 가장 최근 식물 ID 조회 -->
     <select id="getLatestPlantId" parameterType="long" resultType="long">
         SELECT pid FROM Plants WHERE fid = #{fid} ORDER BY created_at DESC LIMIT 1
     </select>
 
+    <!-- 식물 완료 여부 확인 -->
     <select id="isPlantCompleted" parameterType="long" resultType="boolean">
         SELECT is_completed FROM Plants WHERE pid = #{pid}
     </select>
 
+    <!-- 식물 완료 처리 -->
     <update id="markPlantCompleted">
         UPDATE Plants SET is_completed = true WHERE pid = #{pid}
     </update>
 
+    <!-- 보상 기록 추가 -->
     <insert id="insertRewardLog">
         INSERT INTO reward_log (uid, fid, pid, reward_id)
         VALUES (#{uid}, #{fid}, #{pid}, #{rewardId})
     </insert>
 
-    <select id="getRewardHistory" resultType="com.example.demo.plant.dto.RewardHistoryDto">
+    <!-- 사용자 보상 내역 조회 -->
+    <select id="getRewardHistory" parameterType="long" resultMap="RewardMap">
         SELECT r.reward_name, r.description, rl.received_at
         FROM reward_log rl
         JOIN rewards r ON rl.reward_id = r.reward_id
         WHERE rl.uid = #{uid}
         ORDER BY rl.received_at DESC
     </select>
-    <select id="getRewardInfoById" resultType="com.example.demo.plant.dto.RewardHistoryDto">
-        SELECT reward_name, description, NOW() AS received_at
+
+    <!-- 보상 상세 정보 조회 -->
+    <select id="getRewardInfoById" parameterType="int" resultMap="RewardMap">
+        SELECT
+        reward_name,
+        description,
+        NOW() AS received_at
         FROM rewards
         WHERE reward_id = #{rewardId}
+    </select>
+
+    <!-- 이미 보상을 수령했는지 확인 -->
+    <select id="hasAlreadyClaimedReward" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM reward_log
+        WHERE uid = #{uid} AND pid = #{pid}
     </select>
 
 </mapper>

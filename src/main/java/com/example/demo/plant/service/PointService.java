@@ -36,8 +36,8 @@ public class PointService {
     // 활동 유형별로 부여할 포인트 값을 매핑
     private final Map<String, Integer> activityPointMap = Map.of(
             "attendance", 5,
-            "water", 300,
-            "nutrient", 300,
+            "water", 5,
+            "nutrient", 10,
             "emotion", 10,
             "quiz", 10,
             "lastleaf", 10,
@@ -141,18 +141,23 @@ public class PointService {
     }
 
     public int getExpThreshold(int memberCount, int level) {
-        if (memberCount < 2 || memberCount > 5 || level < 1 || level >= 5) {
+        if (level == 5) {
+            return 0;
+        }
+
+        // ✅ 유효성 검사 (레벨: 1~4, 인원: 2~5)
+        if (level < 1 || level > 4 || memberCount < 2 || memberCount > 5) {
             throw new IllegalArgumentException("지원하지 않는 상태입니다.");
         }
+        // 2~5명 멤버에 대한 레벨 1~4 경험치 테이블
         int[][] table = {
-                {},
-                {},
-                {0, 150, 200, 250, 300},
-                {0, 200, 250, 300, 350},
-                {0, 250, 300, 350, 400},
-                {0, 300, 350, 400, 450}
+                {150, 200, 250, 300}, // memberCount = 2
+                {200, 250, 300, 350}, // memberCount = 3
+                {250, 300, 350, 400}, // memberCount = 4
+                {300, 350, 400, 450}  // memberCount = 5
         };
-        return table[memberCount][level];
+
+        return table[memberCount - 2][level - 1];
     }
 
     // 오늘 기준으로 해당 가족(fid)에서 'water' 활동을 한 uid 목록 반환

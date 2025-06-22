@@ -7,6 +7,7 @@ import com.example.demo.voice.service.VoiceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
@@ -25,13 +26,23 @@ public class VoiceController {
     private final VoiceService voiceService;
 
     // 음성 파일 업로드 및 STT 처리
-    @Operation(summary = "음성 업로드", description = "음성 파일 업로드 및 STT 처리")
+    @Operation(
+        summary = "음성 업로드", 
+        description = "음성 파일 업로드 및 STT 처리"
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "성공")
     })
-    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(
+        value = "/upload", 
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
     public ResponseEntity<TranscribedTextResponse> uploadAudio(
-            @Parameter(description = "음성 파일", content = @Content(mediaType = "multipart/form-data"))
+            @Parameter(
+                description = "음성 파일", 
+                content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE)
+            )
             @RequestParam("audio_file") MultipartFile audioFile,
             @Parameter(description = "세션 ID")
             @RequestParam("session_id") Long sessionId

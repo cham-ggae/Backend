@@ -47,7 +47,10 @@ public class ChatbotController {
 
         return emitter;
     }
-    @PostMapping
+    @PostMapping(
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
     public ResponseEntity<String> storeChat(@RequestBody Chatting chatting) {
         chatting.setUid(authenticationService.getCurrentUserId());
         return chatbotService.storeChatting(chatting);

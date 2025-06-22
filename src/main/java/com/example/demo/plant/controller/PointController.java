@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.MediaType;
@@ -25,7 +26,11 @@ public class PointController {
     private final PointService pointService;
     private final AuthenticationService authenticationService;
 
-    @PostMapping("/add")
+    @PostMapping(
+        value = "/add",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
     @Operation(summary = "포인트 적립", description = "지정된 활동 \"attendance\", \"water\", \"nutrient\", \"emotion\", \"quiz\",\"lastleaf\", \"register\",\"survey\"")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "포인트 적립 완료"),

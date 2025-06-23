@@ -6,8 +6,8 @@ import lombok.AllArgsConstructor;
 import java.util.List;
 
 /**
- * 가족 스페이스 대시보드 응답 DTO
- * 메인 대시보드 페이지에서 사용하는 모든 정보를 포함
+ * 가족 스페이스 대시보드 응답 DTO (간소화된 식물 정보 포함)
+ * 메인 대시보드 페이지에서 사용하는 핵심 정보만 포함
  */
 @Data
 @NoArgsConstructor
@@ -30,12 +30,16 @@ public class FamilyDashboardResponse {
     private DiscountInfo discount;
 
     /**
+     * 간소화된 식물 정보 (레벨, 종류, 생성여부만)
+     */
+    private PlantInfo plant;
+
+    /**
      * 편의 메서드: 총 구성원 수
      */
     public int getTotalMembers() {
         return members != null ? members.size() : 0;
     }
-
 
     /**
      * 편의 메서드: 요금제 가입 구성원 수

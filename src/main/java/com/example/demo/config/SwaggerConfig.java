@@ -47,6 +47,17 @@ public class SwaggerConfig {
         return new Info()
                 .title("MODi Family Space API")
                 .description("""
+                    MODi Family Space 애플리케이션의 REST API 문서입니다.
+                    
+                    ## 주요 기능
+                    - 가족 스페이스 관리
+                    - 메시지 카드 및 댓글
+                    - 식물 관리 및 포인트 시스템
+                    - 음성 인식 및 합성
+                    - 챗봇 서비스
+                    
+                    ## 인증
+                    대부분의 API는 JWT 토큰 인증이 필요합니다.
                     """)
                 .version("1.0.0")
                 .contact(new Contact()

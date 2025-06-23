@@ -203,7 +203,59 @@ public class FamilyController {
     }
 
     // ========================================
-    // 6. 가족 탈퇴
+    // 6. 가족 이름 변경
+    // ========================================
+
+    /**
+     * 가족 이름 변경
+     * 가족 구성원만 가족 이름을 변경할 수 있음
+     */
+    @PostMapping(
+        value = "/{fid}/name",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @Operation(
+            summary = "가족 이름 변경",
+            description = "가족 스페이스의 이름을 변경합니다. 해당 가족의 구성원만 실행 가능합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "가족 이름 변경 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "해당 가족의 구성원이 아님"),
+            @ApiResponse(responseCode = "404", description = "가족 스페이스가 존재하지 않음")
+    })
+    public ResponseEntity<UpdateFamilyNameResponse> updateFamilyName(
+            @Parameter(description = "가족 스페이스 ID", required = true, example = "1")
+            @PathVariable Long fid,
+            @Parameter(description = "가족 이름 변경 요청 정보", required = true)
+            @RequestBody UpdateFamilyNameRequest request) {
+
+        try {
+            // JWT 토큰에서 현재 인증된 사용자 ID 획득
+            Long currentUserId = authService.getCurrentUserId();
+
+            UpdateFamilyNameResponse response = familyService.updateFamilyNameWithResponse(fid, currentUserId, request.getName());
+
+            if (response.isSuccess()) {
+                return ResponseEntity.ok(response);
+            } else {
+                return ResponseEntity.badRequest().body(response);
+            }
+
+        } catch (AuthenticationService.AuthenticationException e) {
+            UpdateFamilyNameResponse errorResponse = UpdateFamilyNameResponse.failure("인증이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+
+        } catch (Exception e) {
+            UpdateFamilyNameResponse errorResponse = UpdateFamilyNameResponse.failure("서버 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    // ========================================
+    // 7. 가족 탈퇴
     // ========================================
 
     /**

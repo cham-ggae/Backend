@@ -478,6 +478,38 @@ public class FamilyService {
         }
     }
 
+    /**
+     * 가족 이름 변경 (응답 포함)
+     * 해당 가족의 구성원만 실행 가능
+     *
+     * @param fid 가족 스페이스 ID
+     * @param uid 요청자 사용자 ID (JWT에서 추출)
+     * @param newName 새로운 가족 이름
+     * @return 변경 결과 응답
+     */
+    @Transactional
+    public UpdateFamilyNameResponse updateFamilyNameWithResponse(Long fid, Long uid, String newName) {
+        try {
+            // 기존 메서드 호출하여 이름 변경
+            updateFamilyName(fid, uid, newName);
+
+            // 변경된 가족 정보 조회
+            FamilySpace updatedFamily = familyDao.getFamilySpaceById(fid);
+            if (updatedFamily == null) {
+                throw new FamilyServiceException("가족 정보를 찾을 수 없습니다.");
+            }
+
+            return UpdateFamilyNameResponse.success(updatedFamily, "가족 이름이 성공적으로 변경되었습니다.");
+
+        } catch (FamilyServiceException e) {
+            return UpdateFamilyNameResponse.failure(e.getMessage());
+        } catch (FamilyAccessDeniedException e) {
+            return UpdateFamilyNameResponse.failure(e.getMessage());
+        } catch (Exception e) {
+            return UpdateFamilyNameResponse.failure("가족 이름 변경 중 오류가 발생했습니다.");
+        }
+    }
+
     // ========================================
     // 8. 예외 클래스 정의
     // ========================================

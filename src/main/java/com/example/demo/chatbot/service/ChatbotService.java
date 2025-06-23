@@ -74,7 +74,12 @@ public class ChatbotService implements Chatbot{
             // 기존 사용자 메시지 앞에 넣기
             messages.add(0, systemMsg);
         }
-
+        Map<String,String> fmtPrompt = new HashMap<>();
+        fmtPrompt.put("role","system");
+        fmtPrompt.put("content",
+                        "모든 응답은 줄을 맞춰서 보기 좋게 응답해 주세요. 응답이 길다면 마크다운 형식으로 응답하세요. 제목의 경우 앞뒤로 공백 처리 하거나 줄바꿈 해서 응답하세요. 문장이 끝나면 반드시 줄바꿈 해주세요. 리스트가 끝나면 줄바꿈 해주세요\n"
+        );
+        messages.add(0, fmtPrompt);
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> payload = new HashMap<>();
         payload.put("model", MODEL);

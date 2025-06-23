@@ -54,7 +54,9 @@ public class VoiceServiceImpl implements VoiceService {
 //                System.out.println("[챗봇 응답 일부]: " + partial);
 //            });
 
+
             // 7. 사용자 질문만 응답에 담아 리턴
+
             return new TranscribedTextResponse(true,
                     new TranscribedTextResponse.Data(text, "msg_session_" + sessionId));
         } catch (IOException e) {

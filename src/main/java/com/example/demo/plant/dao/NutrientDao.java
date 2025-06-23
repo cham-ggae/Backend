@@ -6,5 +6,6 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface NutrientDao {
     Integer getNutrientStock(@Param("fid") Long fid);
-    Long getFamilyIdByUid(@Param("uid") Long uid);  // 추가
+    Long getFamilyIdByUid(@Param("uid") Long uid);
+    void decrementNutrientStock(@Param("fid") Long fid);// 추가
 }

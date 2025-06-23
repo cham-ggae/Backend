@@ -2,8 +2,8 @@ package com.example.demo.plant.service;
 
 import com.example.demo.login.service.AuthenticationService;
 import com.example.demo.plant.dao.PointDao;
-import com.example.demo.plant.websocket.WaterWebSocketHandler;
-import com.example.demo.plant.websocket.dto.WaterEventData;
+import com.example.demo.plant.websocket.PlantWebSocketHandler;
+import com.example.demo.plant.websocket.dto.PlantEventData;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +26,7 @@ public class PointService {
 
     private final PointDao pointDao;
     private final AuthenticationService authService;
+    private final NutrientService nutrientService;
 
     // 활동 적용 시 자동완료를 위한 메서드
     public boolean checkActivityExists(Long uid, String type) {
@@ -47,6 +48,10 @@ public class PointService {
     //활동에 따른 포인트 적립 및 경험치 처리
     @Transactional
     public void addPoint(Long uid, String activityType) {
+        // 영양제 사용시 영양제 1개 차감
+        if (activityType.equals("nutrient")) {
+            nutrientService.useNutrient(uid);
+        }
 
         // 활동 1일 1회 제한
         if (pointDao.checkActivityExists(uid, activityType)) {
@@ -89,62 +94,79 @@ public class PointService {
         // 현재 식물 레벨 및 가족 구성원 수 기반으로 레벨업 조건 계산
         int level = pointDao.getPlantLevel(pid);
         int required = getExpThreshold(memberCount, level);
+        boolean isLevelUp = false;
 
         // 레벨업 조건 만족 시 → 레벨업 처리 및 경험치 초기화
         if (updatedExp >= required) {
             pointDao.levelUp(pid);
             pointDao.updateExperience(pid, 0); // 경험치 리셋
+            isLevelUp = true;
         }
 
-        // 물주기일 경우 WebSocket 브로드캐스트 전송 및 영양제 증가 체크
-        if (activityType.equals("water")) {
-            try {
-                String name = pointDao.getUserName(uid);
-                String avatarUrl = pointDao.getUserProfile(uid);
+        // ✅ 모든 활동에 대해 WebSocket 실시간 반영
+        try {
+            String name = pointDao.getUserName(uid);
+            String avatarUrl = pointDao.getUserProfile(uid);
 
-                WaterEventData event = new WaterEventData();
-                event.setFid(fid);
-                event.setUid(uid);
-                event.setName(name);
-                event.setAvatarUrl(avatarUrl);
+            PlantEventData event = new PlantEventData();
+            event.setType(activityType);
+            event.setFid(fid);
+            event.setUid(uid);
+            event.setName(name);
+            event.setAvatarUrl(avatarUrl);
+            event.setLevel(level + (isLevelUp ? 1 : 0));
+            event.setExperiencePoint(isLevelUp ? 0 : updatedExp);
+            event.setExpThreshold(required);
+            event.setLevelUp(isLevelUp);
 
-                String json = new ObjectMapper().writeValueAsString(event);
-                for (WebSocketSession s : WaterWebSocketHandler.sessions) {
-                    if (s.isOpen()) {
-                        s.sendMessage(new TextMessage(json));
-                    }
+            String json = new ObjectMapper().writeValueAsString(event);
+            for (WebSocketSession s : PlantWebSocketHandler.sessions) {
+                if (s.isOpen()) {
+                    s.sendMessage(new TextMessage(json));
                 }
+            }
 
+            // ✅ water일 경우 영양제 추가 확인
+            if (activityType.equals("water")) {
                 Date today = Date.valueOf(LocalDate.now());
                 int watered = pointDao.countWateredMembersToday(fid, today);
                 if (memberCount == watered) {
                     pointDao.incrementNutrient(fid);
                 }
-
-            } catch (Exception e) {
-                log.warn("WebSocket 에러: {}", e.getMessage());
             }
+
+        } catch (Exception e) {
+            log.warn("WebSocket 브로드캐스트 에러: {}", e.getMessage());
         }
     }
 
     public int getExpThreshold(int memberCount, int level) {
-        if (memberCount < 2 || memberCount > 5 || level < 1 || level >= 5) {
+        if (level == 5) {
+            return 0;
+        }
+
+        // ✅ 유효성 검사 (레벨: 1~4, 인원: 2~5)
+        if (level < 1 || level > 4 || memberCount < 2 || memberCount > 5) {
             throw new IllegalArgumentException("지원하지 않는 상태입니다.");
         }
+        // 2~5명 멤버에 대한 레벨 1~4 경험치 테이블
         int[][] table = {
-                {},
-                {},
-                {0, 150, 200, 250, 300},
-                {0, 200, 250, 300, 350},
-                {0, 250, 300, 350, 400},
-                {0, 300, 350, 400, 450}
+                {150, 200, 250, 300}, // memberCount = 2
+                {200, 250, 300, 350}, // memberCount = 3
+                {250, 300, 350, 400}, // memberCount = 4
+                {300, 350, 400, 450}  // memberCount = 5
         };
-        return table[memberCount][level];
+
+        return table[memberCount - 2][level - 1];
     }
 
     // 오늘 기준으로 해당 가족(fid)에서 'water' 활동을 한 uid 목록 반환
     public List<Long> getWateredMembers(Long fid) {
         Date today = Date.valueOf(LocalDate.now());
         return pointDao.getTodayWateredUids(fid, today);
+    }
+
+    public int getPlantLevel(Long pid) {
+        return pointDao.getPlantLevel(pid);
     }
 }

@@ -15,7 +15,7 @@ public class PlantService {
 
     private final PlantDao plantDao;
     private final PointService pointService;
-
+    // 1. 새로운 식물 반환
     public void createPlant(Long uid, String plantType) {
         Long fid = plantDao.getUserFid(uid);
 
@@ -30,7 +30,8 @@ public class PlantService {
         int kid = plantDao.getPlantKindId(plantType);
         plantDao.insertPlant(fid, kid);
     }
-    // 식물 조회 값에 대한 반환 // dto 참고
+
+    // 2. 식물 조회 값에 대한 반환 // dto 참고
     public PlantStatusResponseDto getLatestPlant(Long fid) {
         PlantStatusResponseDto dto = plantDao.selectLatestPlantByFid(fid);
 
@@ -50,24 +51,34 @@ public class PlantService {
         List<Integer> rewardIds = List.of(1, 2, 3, 4);
         return rewardIds.get((int) (Math.random() * rewardIds.size()));
     }
-
+    // 3. 완료된 식물에 대한 보상
     public RewardHistoryDto claimReward(Long uid) {
         Long fid = plantDao.getUserFid(uid);
         Long pid = plantDao.getLatestPlantId(fid);
 
-        if (!plantDao.isPlantCompleted(pid)) {
-            throw new PlantNotCompletedException("아직 완료되지 않은 식물입니다.");
+        // ✅ 현재 식물 레벨 조회
+        int level = pointService.getPlantLevel(pid);
+
+        // ✅ 레벨 5 미만이면 보상 수령 불가
+        if (level < 5) {
+            throw new PlantNotCompletedException("레벨 5가 되지 않아 보상을 수령할 수 없습니다.");
         }
 
+        // ✅ 이미 보상 수령했는지 확인
         if (plantDao.hasAlreadyClaimedReward(uid, pid)) {
             throw new RewardAlreadyClaimedException("이미 보상을 수령한 식물입니다.");
         }
 
+        // ✅ 랜덤 보상 ID 선택
         int rewardId = calculateRewardId(fid, pid);
+
+        // ✅ 보상 수령 기록
         plantDao.insertRewardLog(uid, fid, pid, rewardId);
+
+        // ✅ 이 시점에서 식물을 완료 처리
         plantDao.markPlantCompleted(pid);
 
-        // 보상 이름 및 설명 조회
+        // ✅ 보상 정보 반환
         return plantDao.getRewardInfoById(rewardId);
     }
 

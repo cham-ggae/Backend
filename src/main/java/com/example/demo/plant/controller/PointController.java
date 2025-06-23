@@ -26,7 +26,7 @@ public class PointController {
 
     @PostMapping(
         value = "/add",
-        consumes = MediaType.APPLICATION_JSON_VALUE,
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     @Operation(summary = "포인트 적립", description = "지정된 활동 \"attendance\", \"water\", \"nutrient\", \"emotion\", \"quiz\",\"lastleaf\", \"register\",\"survey\"")
@@ -37,7 +37,7 @@ public class PointController {
     })
     public ResponseEntity<String> addPoint(
             @Parameter(description = "활동 요청 데이터", required = true)
-            @RequestBody AddPointRequestDto request) {
+            @ModelAttribute AddPointRequestDto request) {
         Long uid = authenticationService.getCurrentUserId();
         pointService.addPoint(uid, request.getActivityType());
         return ResponseEntity.ok("포인트 적립 완료");

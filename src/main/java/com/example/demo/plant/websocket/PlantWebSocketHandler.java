@@ -1,13 +1,11 @@
 package com.example.demo.plant.websocket;
 
-import com.example.demo.plant.websocket.dto.WaterEventData;
+import com.example.demo.plant.websocket.dto.PlantEventData;
 import com.example.demo.provider.JwtProvider;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.util.Set;
@@ -15,13 +13,13 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 @Slf4j
 @Component
-public class WaterWebSocketHandler extends TextWebSocketHandler {
+public class PlantWebSocketHandler extends TextWebSocketHandler {
 
     public static final Set<WebSocketSession> sessions = new CopyOnWriteArraySet<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final JwtProvider jwtProvider;
 
-    public WaterWebSocketHandler(JwtProvider jwtProvider) {
+    public PlantWebSocketHandler(JwtProvider jwtProvider) {
         this.jwtProvider = jwtProvider;
     }
 
@@ -55,10 +53,10 @@ public class WaterWebSocketHandler extends TextWebSocketHandler {
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();
-        log.info("물주기 이벤트 수신 : {}", payload);
+        log.info("식물 이벤트 수신: {}", payload);
 
-        WaterEventData data = objectMapper.readValue(payload, WaterEventData.class);
-        log.info("받은 물주기 이벤트: fid={}, uid={}, name={}", data.getFid(), data.getUid(), data.getName());
+        PlantEventData data = objectMapper.readValue(payload, PlantEventData.class);
+        log.info("받은 이벤트: type={}, fid={}, uid={}, name={}", data.getType(), data.getFid(), data.getUid(), data.getName());
 
         String broadcast = objectMapper.writeValueAsString(data);
         for (WebSocketSession s : sessions) {

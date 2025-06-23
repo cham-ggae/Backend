@@ -64,6 +64,9 @@ public class VoiceServiceImpl implements VoiceService {
         }
     }
 
+    /*
+    텍스트를 음성 (MP3 바이트)로 변환
+     */
     @Override
     public TtsLogResponse convertAndLogTts(int cid, String text) {
         byte[] mp3Data = googleTtsService.synthesizeSpeech(text);

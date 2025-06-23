@@ -10,5 +10,5 @@ import java.util.List;
 @Mapper
 public interface ChatbotDao {
     int insertChatting(Chatting chatting)throws SQLException;
-    List<Chatting> selectChatting(@Param("session_id") String sessionId);
+    List<Chatting> selectChatting(@Param("sessionId") String sessionId);
 }

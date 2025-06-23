@@ -8,7 +8,7 @@
             parameterType="com.example.demo.chatbot.dto.Chatting"
             useGeneratedKeys="true" keyProperty="cid">
         INSERT INTO chats (uid, role, content, session_id)
-        VALUES (#{uid}, #{role}, #{content}, #{session_id})
+        VALUES (#{uid}, #{role}, #{content}, #{sessionId})
     </insert>
     <select id="selectChatting"
             parameterType="String"
@@ -21,7 +21,7 @@
             created_at,
             session_id
         FROM chats
-        WHERE session_id = #{session_id}
+        WHERE session_id = #{sessionId}
         ORDER BY created_at DESC
             LIMIT 20
     </select>

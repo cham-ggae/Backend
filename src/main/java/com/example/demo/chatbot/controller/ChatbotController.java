@@ -24,7 +24,7 @@ public class ChatbotController {
     private final AuthenticationService authenticationService;
     private final ChatbotDao chatbotDao;
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter stream(@RequestParam String prompt, @RequestParam String sessionId) throws JsonProcessingException {
+    public SseEmitter stream(@RequestParam String prompt, @RequestParam String sessionId, @RequestParam(defaultValue = "1") Long members) throws JsonProcessingException {
         SseEmitter emitter = new SseEmitter();
         List<Chatting> history = chatbotDao.selectChatting(sessionId);
         Collections.reverse(history);
@@ -34,7 +34,7 @@ public class ChatbotController {
             messages.add(Map.of("role", role, "content", c.getContent()));
         }
         messages.add(Map.of("role", "user", "content", prompt));
-        chatbotService.streamChatting(messages, sessionId, chunk -> {
+        chatbotService.streamChatting(messages, sessionId, members, chunk -> {
             try {
                 emitter.send(chunk);
             } catch (Exception e) {

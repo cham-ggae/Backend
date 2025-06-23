@@ -3,6 +3,7 @@ package com.example.demo.chatbot.service;
 import com.example.demo.chatbot.dao.ChatbotDao;
 import com.example.demo.chatbot.dto.ChatCompletionChunk;
 import com.example.demo.chatbot.dto.Chatting;
+import com.example.demo.chatbot.dto.RagSource;
 import com.example.demo.login.service.AuthenticationService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,7 +39,7 @@ public class ChatbotService implements Chatbot{
 
     private final AuthenticationService authenticationService;
     @Override
-    public void streamChatting(List<Map<String, String>> messages, String sessionId, Consumer<String> consumer) throws JsonProcessingException {
+    public void streamChatting(List<Map<String, String>> messages, String sessionId, Long members, Consumer<String> consumer) throws JsonProcessingException {
         Long userId = authenticationService.getCurrentUserId();
         String userContent = messages.get(messages.size() - 1).get("content");
         Chatting userChat = new Chatting();
@@ -52,6 +53,28 @@ public class ChatbotService implements Chatbot{
             log.warn("유저 채팅 저장 실패: {}", e.getMessage());
         }
         System.out.println(messages);
+
+        if(members >= 2){
+            List<RagSource> ragSources = chatbotDao.getRagSource();
+            // 하나의 system 메시지로 묶기
+            StringBuilder ragContext = new StringBuilder("아래 정보를 참고해서 답변해 주세요:\n\n");
+            for (RagSource r : ragSources) {
+                ragContext
+                        .append("• [")
+                        .append(r.getTitle())
+                        .append(" – ")
+                        .append(r.getSection())
+                        .append("]\n")
+                        .append(r.getContent())
+                        .append("\n\n");
+            }
+            Map<String, String> systemMsg = new HashMap<>();
+            systemMsg.put("role", "system");
+            systemMsg.put("content", ragContext.toString());
+            // 기존 사용자 메시지 앞에 넣기
+            messages.add(0, systemMsg);
+        }
+
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> payload = new HashMap<>();
         payload.put("model", MODEL);

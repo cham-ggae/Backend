@@ -12,8 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.ModelAttribute;
 
 import java.util.List;
 
@@ -28,7 +26,7 @@ public class PointController {
 
     @PostMapping(
         value = "/add",
-        consumes = MediaType.APPLICATION_JSON_VALUE,
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     @Operation(summary = "포인트 적립", description = "지정된 활동 \"attendance\", \"water\", \"nutrient\", \"emotion\", \"quiz\",\"lastleaf\", \"register\",\"survey\"")

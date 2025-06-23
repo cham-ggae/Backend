@@ -30,7 +30,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // 기존 인증 없이 접근 가능한 엔드포인트
-                        .requestMatchers("/authorize", "/oauth2/callback/kakao", "/logout", "/kakao", "/refresh", "/chat","/ws/**").permitAll()
+                        .requestMatchers("/authorize", "/oauth2/callback/kakao", "/logout", "/kakao", "/refresh","/ws/**").permitAll()
 
                         // Swagger UI 관련 경로들 (개발 환경용)
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
@@ -42,7 +42,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/user/additional-info").authenticated()
 
                         // 기타 모든 요청
-                        .anyRequest().permitAll()
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .formLogin(AbstractHttpConfigurer::disable) // 기본 로그인 페이지 비활성화

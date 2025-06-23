@@ -7,5 +7,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RagSource {
     private String title;
+    private String section;
     private String content;
 }

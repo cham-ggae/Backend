@@ -25,4 +25,7 @@
         ORDER BY created_at DESC
             LIMIT 20
     </select>
+    <select id="getRagSource">
+        SELECT * FROM rag_source_data
+    </select>
 </mapper>

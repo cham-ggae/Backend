@@ -1,6 +1,7 @@
 package com.example.demo.chatbot.dao;
 
 import com.example.demo.chatbot.dto.Chatting;
+import com.example.demo.chatbot.dto.RagSource;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -11,4 +12,5 @@ import java.util.List;
 public interface ChatbotDao {
     int insertChatting(Chatting chatting)throws SQLException;
     List<Chatting> selectChatting(@Param("sessionId") String sessionId);
+    List<RagSource> getRagSource();
 }

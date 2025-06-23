@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public interface Chatbot {
-    public void streamChatting(List<Map<String, String>> messages, String sessionId, Consumer<String> consumer) throws JsonProcessingException;
+    public void streamChatting(List<Map<String, String>> messages, String sessionId, Long members, Consumer<String> consumer) throws JsonProcessingException;
     public List<Chatting> getChattingList(String sessionId);
     public ResponseEntity<String> storeChatting(Chatting chatting);
 }

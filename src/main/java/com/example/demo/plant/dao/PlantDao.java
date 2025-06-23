@@ -36,4 +36,11 @@ public interface PlantDao {
     boolean hasAlreadyClaimedReward(@Param("uid") Long uid, @Param("pid") Long pid);
     // 보상 기록 확인 rewards
     RewardHistoryDto getRewardInfoById(@Param("rewardId") int rewardId);
+    //추가
+    //보상 수령 완료
+    void updateRewardLogUsed(@Param("rewardLogId") Long rewardLogId);
+    //우리 가족이 수령한 보상 전체
+    List<RewardHistoryDto> getRewardHistoryByFamily(@Param("fid") Long fid);
+    // 보상 로그 → 가족 ID 조회
+    Long getRewardFidByRewardLogId(@Param("rewardLogId") Long rewardLogId);
 }

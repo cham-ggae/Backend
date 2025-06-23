@@ -6,9 +6,12 @@
 
     <!-- ✅ RewardHistoryDto 매핑을 위한 resultMap -->
     <resultMap id="RewardMap" type="com.example.demo.plant.dto.RewardHistoryDto">
+        <result column="reward_log_id" property="rewardLogId"/> <!-- ✅ alias와 일치 -->
+        <result column="reward_id" property="rewardId"/>
         <result column="reward_name" property="rewardName"/>
         <result column="description" property="description"/>
         <result column="received_at" property="receivedAt"/>
+        <result column="isUsed" property="isUsed"/>
     </resultMap>
 
     <!-- 사용자 가족 ID 조회 -->
@@ -72,9 +75,15 @@
         VALUES (#{uid}, #{fid}, #{pid}, #{rewardId})
     </insert>
 
-    <!-- 사용자 보상 내역 조회 -->
+    <!-- 사용자 보상 내역 조회 //확인-->
     <select id="getRewardHistory" parameterType="long" resultMap="RewardMap">
-        SELECT r.reward_name, r.description, rl.received_at
+        SELECT
+        rl.rid AS reward_log_id,
+        rl.reward_id,
+        r.reward_name,
+        r.description,
+        rl.received_at,
+        rl.isUsed
         FROM reward_log rl
         JOIN rewards r ON rl.reward_id = r.reward_id
         WHERE rl.uid = #{uid}
@@ -96,6 +105,30 @@
         SELECT COUNT(*) > 0
         FROM reward_log
         WHERE uid = #{uid} AND pid = #{pid}
+    </select>
+    <!-- 보상을 수령해서 사용했는지 확인 -->
+    <update id="updateRewardLogUsed">
+        UPDATE reward_log
+        SET isUsed = 1
+        WHERE rid = #{rewardLogId}
+    </update>
+    <!-- 가족 전체의 보상 내역 확인 -->
+    <select id="getRewardHistoryByFamily" parameterType="long" resultMap="RewardMap">
+        SELECT
+        rl.rid AS reward_log_id,
+        rl.reward_id,
+        r.reward_name,
+        r.description,
+        rl.received_at,
+        rl.isUsed
+        FROM reward_log rl
+        JOIN rewards r ON rl.reward_id = r.reward_id
+        WHERE rl.fid = #{fid}
+        ORDER BY rl.received_at DESC
+    </select>
+    <!--  보상 로그 → 가족 fid 조회 -->
+    <select id="getRewardFidByRewardLogId" parameterType="long" resultType="long">
+        SELECT fid FROM reward_log WHERE rid = #{rewardLogId}
     </select>
 
 </mapper>

@@ -85,4 +85,18 @@ public class PlantService {
     public List<RewardHistoryDto> getRewardHistory(Long uid) {
         return plantDao.getRewardHistory(uid);
     }
+
+    public List<RewardHistoryDto> getRewardHistoryByFamily(Long uid) {
+        Long fid = plantDao.getUserFid(uid);   // 가족 ID로 변환
+        return plantDao.getRewardHistoryByFamily(fid); // 가족 전체 보상 조회
+    }
+
+    public void markRewardAsUsed(Long uid, Long rewardLogId) {
+        Long userFid = plantDao.getUserFid(uid);
+        Long rewardFid = plantDao.getRewardFidByRewardLogId(rewardLogId);
+
+        plantDao.updateRewardLogUsed(rewardLogId);
+    }
+
+
 }

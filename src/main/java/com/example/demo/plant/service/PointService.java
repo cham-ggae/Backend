@@ -35,14 +35,14 @@ public class PointService {
 
     // 활동 유형별로 부여할 포인트 값을 매핑
     private final Map<String, Integer> activityPointMap = Map.of(
-            "attendance", 5,
-            "water", 5,
-            "nutrient", 10,
-            "emotion", 10,
-            "quiz", 10,
-            "lastleaf", 10,
-            "register", 10,
-            "survey", 5
+            "attendance", 200,
+            "water", 200,
+            "nutrient", 200,
+            "emotion", 100,
+            "quiz", 100,
+            "lastleaf", 100,
+            "register", 100,
+            "survey", 200
     );
 
     //활동에 따른 포인트 적립 및 경험치 처리

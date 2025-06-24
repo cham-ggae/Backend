@@ -88,4 +88,18 @@ public class PlantController {
         Long uid = authService.getCurrentUserId();
         return ResponseEntity.ok(plantService.getRewardHistory(uid));
     }
+
+    @GetMapping("/rewards/family-history")
+    public ResponseEntity<List<RewardHistoryDto>> getFamilyRewardHistory() {
+        Long uid = authService.getCurrentUserId();
+        return ResponseEntity.ok(plantService.getRewardHistoryByFamily(uid));
+    }
+
+    @PatchMapping("/rewards/mark-used/{rewardLogId}")
+    @Operation(summary = "보상 사용 처리", description = "가족 보상 로그를 isUsed = true로 처리합니다.")
+    public ResponseEntity<Void> markRewardAsUsed(@PathVariable Long rewardLogId) {
+        Long uid = authService.getCurrentUserId();
+        plantService.markRewardAsUsed(uid, rewardLogId);
+        return ResponseEntity.ok().build();
+    }
 }

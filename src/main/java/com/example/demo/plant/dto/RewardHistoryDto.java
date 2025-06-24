@@ -10,7 +10,10 @@ import lombok.Setter;
 @Getter
 @Setter
 public class RewardHistoryDto {
+    private Long rewardLogId;
+    private int rewardId;
     private String rewardName;
     private String description;
     private String receivedAt;
+    private boolean isUsed;
 }

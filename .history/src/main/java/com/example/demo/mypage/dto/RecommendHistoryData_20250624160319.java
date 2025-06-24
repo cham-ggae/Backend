@@ -15,5 +15,4 @@ public class RecommendHistoryData {
     private int discountPrice;
     private String benefit;
     private String link;
-    private String createdAt; // 히스토리 생성 시각
 }

@@ -45,7 +45,7 @@ public class VoiceController {
             )
             @RequestParam("audio_file") MultipartFile audioFile,
             @Parameter(description = "세션 ID")
-            @RequestParam("session_id") Long sessionId
+            @RequestParam("session_id") String sessionId
 //            @RequestHeader("Authorization") String authHeader
     ) throws IOException {
 //        String token = authHeader.replace("Bearer ", "");

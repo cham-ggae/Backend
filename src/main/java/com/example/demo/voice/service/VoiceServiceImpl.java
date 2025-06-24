@@ -34,7 +34,7 @@ public class VoiceServiceImpl implements VoiceService {
     음성 파일 업로드 및 STT 처리 -> 텍스트 추출 후 챗봇 응답 요청까지
      */
     @Override
-    public TranscribedTextResponse handleAudioUpload(MultipartFile file, Long sessionId, String token) {
+    public TranscribedTextResponse handleAudioUpload(MultipartFile file, String sessionId, String token) {
         try {
             // 1. 이메일 추출
 //            String email = jwtProvider.getEmail(token);

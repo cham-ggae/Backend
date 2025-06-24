@@ -42,11 +42,14 @@
     <select id="getFamilyMembers" parameterType="long" resultType="com.example.demo.family.dto.FamilyMember">
         SELECT
         u.uid,
+        u.fid,
         u.name,
+        u.email,
         u.age,
-        u.gender,
         u.join_date as joinDate,
         u.profile_image as profileImage,
+        u.bug_id as bugId,
+        u.survey_date as surveyDate,
         p.plan_id as planId,
         p.plan_name as planName,
         p.price,
@@ -68,11 +71,14 @@
     <select id="getFamilyMemberByUid" parameterType="long" resultType="com.example.demo.family.dto.FamilyMember">
         SELECT
         u.uid,
+        u.fid,
         u.name,
+        u.email,
         u.age,
-        u.gender,
         u.join_date as joinDate,
         u.profile_image as profileImage,
+        u.bug_id as bugId,
+        u.survey_date as surveyDate,
         p.plan_id as planId,
         p.plan_name as planName,
         p.price,
@@ -329,7 +335,7 @@
             u.uid,
             u.name,
             u.age,
-            u.gender,
+            u.survey_date as surveyDate,
             u.bug_id as bugId,
             b.bug_name as bugName,
             b.feature,
@@ -341,6 +347,69 @@
         LEFT JOIN Bugs b ON u.bug_id = b.bug_id
         WHERE u.fid = #{fid}
         ORDER BY u.join_date ASC
+    </select>
+
+    <!-- ========================================
+         9. 요금제 매핑 및 업데이트 관련 쿼리
+         ======================================== -->
+
+    <!-- 사용자의 설문 결과를 기반으로 추천 요금제 ID 조회 -->
+    <select id="getRecommendedPlanIdByUser" parameterType="long" resultType="java.lang.Integer">
+        SELECT b.suggest1
+        FROM Users u
+        INNER JOIN Bugs b ON u.bug_id = b.bug_id
+        WHERE u.uid = #{uid}
+        AND u.bug_id IS NOT NULL
+    </select>
+
+    <!-- 사용자의 요금제 ID 업데이트 -->
+    <update id="updateUserPlanId">
+        UPDATE Users
+        SET plan_id = #{planId}
+        WHERE uid = #{uid}
+    </update>
+
+    <!-- 요금제 ID로 Plans 테이블에서 상세 정보 조회 -->
+    <select id="getPlanInfoById" parameterType="int" resultType="map">
+        SELECT 
+            plan_name as planName,
+            price,
+            benefit
+        FROM Plans
+        WHERE plan_id = #{planId}
+    </select>
+
+    <!-- 사용자의 설문 결과 기반 두 개의 추천 요금제 상세 정보 조회 -->
+    <select id="getRecommendedPlansDetailByUser" parameterType="long" resultType="map">
+        SELECT 
+            1 as rank,
+            p1.plan_id as planId,
+            p1.plan_name as planName,
+            p1.price,
+            p1.discount_price as discountPrice,
+            p1.benefit,
+            p1.link
+        FROM Users u
+        INNER JOIN Bugs b ON u.bug_id = b.bug_id
+        INNER JOIN Plans p1 ON b.suggest1 = p1.plan_id
+        WHERE u.uid = #{uid} AND u.bug_id IS NOT NULL
+        
+        UNION ALL
+        
+        SELECT 
+            2 as rank,
+            p2.plan_id as planId,
+            p2.plan_name as planName,
+            p2.price,
+            p2.discount_price as discountPrice,
+            p2.benefit,
+            p2.link
+        FROM Users u
+        INNER JOIN Bugs b ON u.bug_id = b.bug_id
+        INNER JOIN Plans p2 ON b.suggest2 = p2.plan_id
+        WHERE u.uid = #{uid} AND u.bug_id IS NOT NULL
+        
+        ORDER BY rank ASC
     </select>
 
 </mapper>

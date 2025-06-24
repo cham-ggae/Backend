@@ -3,6 +3,7 @@ package com.example.demo.family.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import java.time.LocalDateTime;
 
 /**
  * 가족 구성원 설문 정보 DTO
@@ -29,9 +30,9 @@ public class FamilyMemberSurveyInfo {
     private String age;
 
     /**
-     * 성별
+     * 설문조사 실시 날짜
      */
-    private String gender;
+    private LocalDateTime surveyDate;
 
     /**
      * 설문 결과 유형 ID
@@ -73,5 +74,12 @@ public class FamilyMemberSurveyInfo {
      */
     public boolean hasSurveyResult() {
         return bugId != null;
+    }
+
+    /**
+     * 설문 날짜 완료 여부
+     */
+    public boolean hasSurveyDate() {
+        return surveyDate != null;
     }
 } 

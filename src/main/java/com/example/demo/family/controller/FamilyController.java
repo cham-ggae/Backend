@@ -359,12 +359,12 @@ public class FamilyController {
     // ========================================
 
     /**
-     * 현재 사용자가 속한 가족 정보 조회 (간소화된 식물 정보 포함)
+     * 현재 사용자가 속한 가족 정보 조회 (간소화된 식물 정보 + 추천 정보 포함)
      */
     @GetMapping()
     @Operation(
-            summary = "내 가족 정보 조회 (간소화된 식물 정보 포함)",
-            description = "현재 로그인한 사용자가 속한 가족의 기본 정보와 식물의 레벨, 종류, 생성 여부를 조회합니다."
+            summary = "내 가족 정보 조회 (간소화된 식물 정보 + 추천 정보 포함)",
+            description = "현재 로그인한 사용자가 속한 가족의 기본 정보, 식물의 레벨/종류/생성 여부, 그리고 간소화된 요금제 추천 정보를 조회합니다."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),
@@ -391,12 +391,12 @@ public class FamilyController {
     }
 
     /**
-     * 가족 스페이스 대시보드 정보 조회 (간소화된 식물 정보 포함)
+     * 가족 스페이스 대시보드 정보 조회 (간소화된 식물 정보 + 추천 정보 포함)
      */
     @GetMapping("/{fid}")
     @Operation(
-            summary = "가족 대시보드 조회 (간소화된 식물 정보 포함)",
-            description = "가족 스페이스의 기본 정보와 식물의 레벨, 종류, 생성 여부를 조회합니다."
+            summary = "가족 대시보드 조회 (간소화된 식물 정보 + 추천 정보 포함)",
+            description = "가족 스페이스의 기본 정보, 식물의 레벨/종류/생성 여부, 그리고 간소화된 요금제 추천 정보를 조회합니다."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "조회 성공"),

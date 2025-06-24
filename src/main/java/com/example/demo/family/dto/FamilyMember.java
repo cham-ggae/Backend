@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 가족 구성원 정보 DTO
@@ -23,11 +24,23 @@ public class FamilyMember {
     private Long uid;
 
     /**
+     * 가족 스페이스 ID
+     * Users.fid와 매핑
+     */
+    private Long fid;
+
+    /**
      * 사용자 이름
      * 카카오 로그인 시 제공되는 이름 또는 사용자 입력 이름
      * 최대 15자까지 저장 가능
      */
     private String name;
+
+    /**
+     * 사용자 이메일
+     * 카카오 로그인 시 제공되는 이메일 또는 사용자 입력 이메일
+     */
+    private String email;
 
     /**
      * 사용자 나이
@@ -38,19 +51,32 @@ public class FamilyMember {
     private String age;
 
     /**
-     * 사용자 성별
-     * 요금제 추천 시 참고 데이터로 사용
-     * 가능한 값: "남", "여", "others"
-     * 최대 3자까지 저장 가능
-     */
-    private String gender;
-
-    /**
      * 서비스 가입일시
      * 장기 고객 할인 계산 기준일
      * 자동으로 현재 시간이 설정됨
      */
     private LocalDateTime joinDate;
+
+    /**
+     * 프로필 이미지 URL
+     * 카카오 로그인에서 제공되는 프로필 이미지
+     */
+    private String profileImage;
+
+    // 설문조사 관련 정보
+    /**
+     * 매칭된 버그 ID (설문조사 결과)
+     * 설문조사 결과에 따라 매핑되는 버그 유형 ID
+     * NULL 가능 (설문조사 미완료 시)
+     */
+    private Integer bugId;
+
+    /**
+     * 설문조사 실시 날짜
+     * 설문조사를 완료한 날짜
+     * NULL 가능 (설문조사 미완료 시)
+     */
+    private LocalDateTime surveyDate;
 
     // 요금제 정보 (Plans 테이블 - LEFT JOIN)
     /**
@@ -90,18 +116,63 @@ public class FamilyMember {
      */
     private String dataUsage;
 
+    // 추천 요금제 정보 (설문조사 결과 기반)
     /**
-     * 프로필 이미지 URL (추가)
-     * 카카오 로그인에서 제공되는 프로필 이미지
+     * 설문조사 결과 기반 추천 요금제 목록
+     * suggest1, suggest2에 해당하는 요금제 정보
      */
-    private String profileImage;
+    private List<RecommendedPlan> recommendedPlans;
+
+    /**
+     * 추천 요금제 정보 내부 클래스
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RecommendedPlan {
+        /**
+         * 추천 순위 (1: suggest1, 2: suggest2)
+         */
+        private Integer rank;
+        
+        /**
+         * 요금제 ID
+         */
+        private Integer planId;
+        
+        /**
+         * 요금제명
+         */
+        private String planName;
+        
+        /**
+         * 기본 가격
+         */
+        private Integer price;
+        
+        /**
+         * 할인 가격
+         */
+        private Integer discountPrice;
+        
+        /**
+         * 요금제 혜택
+         */
+        private String benefit;
+        
+        /**
+         * 요금제 링크
+         */
+        private String link;
+    }
 
     // 생성자들
-    public FamilyMember(Long uid, String name, String age, String gender, LocalDateTime joinDate) {
+    public FamilyMember(Long uid, Long fid, String name, String email, String age, LocalDateTime joinDate) {
         this.uid = uid;
+        this.fid = fid;
         this.name = name;
+        this.email = email;
         this.age = age;
-        this.gender = gender;
         this.joinDate = joinDate;
     }
 
@@ -114,6 +185,22 @@ public class FamilyMember {
     }
 
     /**
+     * 설문조사 완료 여부 확인
+     * @return 설문조사 날짜가 있으면 true, 그렇지 않으면 false
+     */
+    public boolean hasSurvey() {
+        return surveyDate != null;
+    }
+
+    /**
+     * 버그 정보 매핑 여부 확인
+     * @return 버그 ID가 있으면 true, 그렇지 않으면 false
+     */
+    public boolean hasBugMapping() {
+        return bugId != null;
+    }
+
+    /**
      * 요금제 요약 정보 생성 (UI 표시용)
      * @return 요금제명과 월 이용료를 포함한 요약 문자열
      */
@@ -122,5 +209,19 @@ public class FamilyMember {
             return "요금제 없음";
         }
         return planName + " (월 " + String.format("%,d", price) + "원)";
+    }
+
+    /**
+     * 설문조사 상태 요약 정보 생성 (UI 표시용)
+     * @return 설문조사 완료 여부와 버그 매핑 상태를 포함한 요약 문자열
+     */
+    public String getSurveyStatusSummary() {
+        if (!hasSurvey()) {
+            return "설문조사 미완료";
+        }
+        if (hasBugMapping()) {
+            return "설문조사 완료 (버그 ID: " + bugId + ")";
+        }
+        return "설문조사 완료";
     }
 }

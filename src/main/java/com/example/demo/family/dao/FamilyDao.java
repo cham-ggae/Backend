@@ -324,4 +324,45 @@ public interface FamilyDao {
      */
     List<FamilyMemberSurveyInfo> getFamilyMembersSurveyInfo(@Param("fid") Long fid);
 
+    // ========================================
+    // 9. 요금제 매핑 및 업데이트 관련
+    // ========================================
+
+    /**
+     * 사용자의 설문 결과를 기반으로 추천 요금제 ID 조회
+     * Users와 Bugs 테이블을 JOIN하여 suggest1을 반환
+     *
+     * @param uid 사용자 ID
+     * @return 추천 요금제 ID (suggest1), 설문 미완료 시 null
+     */
+    Integer getRecommendedPlanIdByUser(@Param("uid") Long uid);
+
+    /**
+     * 사용자의 요금제 ID 업데이트
+     * Users 테이블의 plan_id 필드를 업데이트
+     *
+     * @param uid 사용자 ID
+     * @param planId 새로운 요금제 ID
+     * @return 영향받은 행 수 (성공 시 1)
+     */
+    int updateUserPlanId(@Param("uid") Long uid, @Param("planId") Integer planId);
+
+    /**
+     * 요금제 ID로 Plans 테이블에서 상세 정보 조회
+     * 요금제명, 가격, 혜택 정보를 포함
+     *
+     * @param planId 요금제 ID
+     * @return 요금제 상세 정보 Map (planName, price, benefit)
+     */
+    Map<String, Object> getPlanInfoById(@Param("planId") Integer planId);
+
+    /**
+     * 사용자의 설문 결과를 기반으로 두 개의 추천 요금제 정보 조회
+     * Users, Bugs, Plans 테이블을 JOIN하여 suggest1, suggest2의 상세 정보 반환
+     *
+     * @param uid 사용자 ID
+     * @return 추천 요금제 정보 목록 (suggest1, suggest2)
+     */
+    List<Map<String, Object>> getRecommendedPlansDetailByUser(@Param("uid") Long uid);
+
 }

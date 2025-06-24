@@ -87,4 +87,26 @@ public class UserService {
             return true;
         }
     }
+
+    /**
+     * 현재 로그인된 사용자 정보 조회
+     *
+     * @return 현재 로그인된 사용자 정보
+     * @throws SQLException DB 조회 실패 시
+     * @throws AuthenticationService.AuthenticationException 인증되지 않은 사용자인 경우
+     */
+    public User getCurrentUserInfo() throws SQLException {
+        String currentUserEmail = authenticationService.getCurrentUserEmail();
+        
+        log.debug("현재 사용자 정보 조회. email: {}", currentUserEmail);
+        
+        User user = userDao.findByEmail(currentUserEmail);
+        if (user == null) {
+            log.warn("사용자를 찾을 수 없습니다. email: {}", currentUserEmail);
+            throw new IllegalStateException("사용자 정보를 찾을 수 없습니다.");
+        }
+        
+        log.debug("사용자 정보 조회 완료. uid: {}, name: {}", user.getUid(), user.getName());
+        return user;
+    }
 }

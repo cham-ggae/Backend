@@ -31,12 +31,24 @@ public class SurveyController {
      */
     @PostMapping(
         value = "/surveyResult",
-        consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
+        consumes = {MediaType.APPLICATION_FORM_URLENCODED_VALUE, MediaType.APPLICATION_JSON_VALUE},
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     @Operation(summary = "설문 유형 결과 저장", description = "설문 후 유형 결과 DB에 저장")
-    public ResponseEntity<?> surveyResult(@RequestParam("bugId") int bugId) {
+    public ResponseEntity<?> surveyResult(@RequestParam(value = "bugId", required = false) Integer bugIdParam,
+                                        @RequestBody(required = false) java.util.Map<String, Object> requestBody) {
         Long currentUserId = authenticationService.getCurrentUserId(); // 현재 로그인 사용자 ID 조회
+        
+        // bugId 추출 (form-data 또는 JSON)
+        Integer bugId = bugIdParam;
+        if (bugId == null && requestBody != null && requestBody.containsKey("bugId")) {
+            bugId = (Integer) requestBody.get("bugId");
+        }
+        
+        if (bugId == null) {
+            return ResponseEntity.badRequest().body("bugId는 필수입니다.");
+        }
+        
         surveyService.surveyResult(currentUserId.intValue(), bugId); // ID 직접 주입
         return ResponseEntity.ok("설문 결과 저장 완료");
     }

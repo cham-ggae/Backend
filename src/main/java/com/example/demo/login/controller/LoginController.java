@@ -4,6 +4,7 @@ import com.example.demo.login.dto.AdditionalUserInfoRequest;
 import com.example.demo.login.dto.KakaoLogoutRes;
 import com.example.demo.login.dto.KakaoUserInfo;
 import com.example.demo.login.dto.User;
+import com.example.demo.login.dto.UserInfoResponse;
 import com.example.demo.login.service.AuthenticationService;
 import com.example.demo.login.service.KakaoLoginService;
 import com.example.demo.login.service.UserService;
@@ -257,6 +258,106 @@ public class LoginController {
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(errorResponse);
+        }
+    }
+
+    /**
+     * 현재 로그인된 사용자 정보 조회
+     *
+     * @return 현재 로그인된 사용자 정보 (액세스 토큰 제외)
+     */
+    @Operation(
+            summary = "현재 사용자 정보 조회",
+            description = "JWT 토큰을 통해 현재 로그인된 사용자의 정보를 조회합니다. " +
+                    "보안상 카카오 액세스 토큰과 리프레시 토큰은 응답에 포함되지 않습니다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "사용자 정보 조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = UserInfoResponse.class),
+                            examples = @ExampleObject(
+                                    value = """
+                                    {
+                                        "uid": 1,
+                                        "fid": 1,
+                                        "plan_id": null,
+                                        "bug_id": null,
+                                        "name": "김홍길동",
+                                        "email": "user@example.com",
+                                        "age": "20~29",
+                                        "gender": "female",
+                                        "survey_date": "2024-01-01",
+                                        "join_date": "2024-01-01",
+                                        "role": "USER",
+                                        "profile_image": "https://example.com/profile.jpg"
+                                    }
+                                    """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증되지 않은 사용자",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                    {
+                                        "success": false,
+                                        "message": "인증이 필요합니다."
+                                    }
+                                    """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "서버 내부 오류",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    value = """
+                                    {
+                                        "success": false,
+                                        "message": "사용자 정보 조회에 실패했습니다.",
+                                        "error": "데이터베이스 연결 오류"
+                                    }
+                                    """
+                            )
+                    )
+            )
+    })
+    @GetMapping("/user")
+    public ResponseEntity<?> getCurrentUserInfo() {
+        try {
+            User user = userService.getCurrentUserInfo();
+            UserInfoResponse response = UserInfoResponse.from(user);
+            
+            log.debug("사용자 정보 조회 성공. uid: {}, email: {}", user.getUid(), user.getEmail());
+            return ResponseEntity.ok(response);
+            
+        } catch (AuthenticationService.AuthenticationException e) {
+            log.warn("인증되지 않은 사용자의 정보 조회 시도: {}", e.getMessage());
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "인증이 필요합니다.");
+            
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+            
+        } catch (Exception e) {
+            log.error("사용자 정보 조회 실패", e);
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "사용자 정보 조회에 실패했습니다.");
+            errorResponse.put("error", e.getMessage());
+            
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 

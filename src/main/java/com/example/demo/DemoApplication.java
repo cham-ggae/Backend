@@ -35,6 +35,9 @@ public class DemoApplication {
 		setSystemPropertyIfExists(dotenv, "GOOGLE_CREDENTIALS_PATH");
 		setSystemPropertyIfExists(dotenv, "GOOGLE_BUCKET_NAME");
 		
+		// JWT 설정
+		setSystemPropertyIfExists(dotenv, "jwtKey");
+		
 		SpringApplication.run(DemoApplication.class, args);
 	}
 

@@ -1,18 +1,18 @@
 package com.example.demo.provider;
 
-import io.github.cdimascio.dotenv.Dotenv;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
 @Component
 public class JwtProvider {
-    static Dotenv dotenv = Dotenv.configure().load();
-
-    private static final String secret = dotenv.get("jwtKey"); // dotenv로 빼도 됨
+    
+    @Value("${jwtKey:default-secret-key-for-development}")
+    private String secret;
     // 액세스 토큰: 10분
 //    private static final long ACCESS_VALIDITY  = 1000L * 60 * 60 * 2;
     private static final long ACCESS_VALIDITY  = 1000L * 60 * 10;

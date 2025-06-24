@@ -16,7 +16,6 @@ public class MyPageResponse {
         private String name;
         private String profileImage;
         private Long bugId;
-        private String surveyDate;
     }
 
     @Data

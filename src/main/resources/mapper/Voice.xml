@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.demo.voice.dao.VoiceDao">
+
+    <!-- tts_log 테이블에 변환된 음성 URL 저장 -->
+    <insert id="insertTtsLog" parameterType="com.example.demo.voice.dto.TtsLogRequest">
+        INSERT INTO tts_log (cid, tts_url, created_at)
+        VALUES (#{cid}, #{ttsUrl}, NOW());
+    </insert>
+
+    <!-- cid로 GCS URL 조회 -->
+    <select id="findTtsUrlByCid" resultType="String">
+        SELECT tts_url FROM tts_log WHERE cid = #{cid}
+    </select>
+
+    <!-- cid로 텍스트 조회 -->
+    <select id="findChatTextByCid" resultType="String">
+        SELECT content FROM chats WHERE cid = #{cid}
+    </select>
+</mapper>

@@ -29,16 +29,28 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/authorize", "/oauth2/callback/kakao", "/logout", "/kakao").permitAll()
+                        // 기존 인증 없이 접근 가능한 엔드포인트
+                        .requestMatchers("/authorize", "/oauth2/callback/kakao", "/logout", "/kakao", "/refresh","/ws/**").permitAll()
+
+                        // Swagger UI 관련 경로들 (개발 환경용)
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-resources/**").permitAll()
+                        .requestMatchers("/webjars/**").permitAll()
+
+                        // 사용자 추가 정보 업데이트 엔드포인트 (인증 필요)
+                        .requestMatchers("/api/user/additional-info").authenticated()
+
+                        // 기타 모든 요청
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .formLogin(AbstractHttpConfigurer::disable) // 기본 로그인 페이지 비활성화
                 .logout(AbstractHttpConfigurer::disable);   // 기본 로그아웃 비활성화
 
-
         return http.build();
     }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();

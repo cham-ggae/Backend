@@ -5,12 +5,27 @@
 <!-- namespace는 패키지 포함한 mapper(DAO interface) 이름으로 설정 한다. -->
 <mapper namespace="com.example.demo.login.dao.UserDao">
     <insert id="joinMembership">
-        insert into Users(email, access_token, refresh_token) values (#{email}, #{accessToken}, #{refreshToken})
+        insert into Users(email, kakao_accesstoken, kakao_refreshtoken, age, gender, name, profile_image) values (#{email}, #{accessToken}, #{refreshToken}, #{age}, #{gender}, #{name}, #{profile_image})
     </insert>
+    <update id="updateUserInfo">
+        update Users set age = #{age}, gender = #{gender} where email = #{email}
+    </update>
     <update id="updateToken">
         update Users set access_token = #{accessToken}, refresh_token = #{refreshToken} where email = #{email}
     </update>
     <select id="findByEmail">
         select * from Users where email = #{email}
     </select>
+
+    <!-- 카카오 토큰 업데이트 -->
+    <update id="updateKakaoTokens">
+        update Users set kakao_accesstoken = #{kakaoAccessToken}, kakao_refreshtoken = #{kakaoRefreshToken}
+        where email = #{email}
+    </update>
+
+    <!-- 카카오 토큰 삭제 (로그아웃 시) -->
+    <update id="clearKakaoTokens">
+        update Users set kakao_accesstoken = null, kakao_refreshtoken = null
+        where email = #{email}
+    </update>
 </mapper>

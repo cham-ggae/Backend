@@ -61,7 +61,7 @@ public class SecurityConfig {
         if ("prod".equals(activeProfile)) {
             // 프로덕션 환경
             config.setAllowedOrigins(List.of(
-                "https://your-app.onrender.com"
+                "https://modi-backend-th1n.onrender.com"
             ));
         } else {
             // 개발 환경

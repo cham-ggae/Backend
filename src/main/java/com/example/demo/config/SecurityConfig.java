@@ -55,7 +55,21 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(List.of("https://localhost:3000", "http://localhost:3000")); // cors 허용할 url들
+        
+        // 환경별 허용 URL 설정
+        String activeProfile = System.getProperty("spring.profiles.active", "default");
+        if ("prod".equals(activeProfile)) {
+            // 프로덕션 환경
+            config.setAllowedOrigins(List.of(
+                "https://modi-backend-th1n.onrender.com"
+            ));
+        } else {
+            // 개발 환경
+            config.setAllowedOrigins(List.of(
+                "http://localhost:3000"
+            ));
+        }
+        
         config.setAllowedHeaders(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setExposedHeaders(List.of("Authorization"));

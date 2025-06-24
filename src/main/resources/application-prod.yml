@@ -52,6 +52,9 @@ google:
   credentials-path: ${GOOGLE_CREDENTIALS_PATH}
   bucket-name: ${GOOGLE_BUCKET_NAME}
 
+# JWT 설정
+jwtKey: ${jwtKey}
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -70,6 +73,8 @@ management:
 # CORS 설정 (필요시)
 cors:
   allowed-origins:
+    - 'https://your-frontend-domain.com'
+    - 'https://your-app.onrender.com'
     - 'http://localhost:3000'
   allowed-methods:
     - GET

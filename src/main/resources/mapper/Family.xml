@@ -319,4 +319,28 @@
         WHERE u.fid = #{fid}
     </delete>
 
+    <!-- ========================================
+         8. 가족 요금제 추천 관련 쿼리
+         ======================================== -->
+
+    <!-- 가족 구성원들의 설문 정보 조회 (요금제 추천용) -->
+    <select id="getFamilyMembersSurveyInfo" parameterType="long" resultType="com.example.demo.family.dto.FamilyMemberSurveyInfo">
+        SELECT 
+            u.uid,
+            u.name,
+            u.age,
+            u.gender,
+            u.bug_id as bugId,
+            b.bug_name as bugName,
+            b.feature,
+            b.personality,
+            b.suggest1,
+            b.suggest2,
+            u.plan_id as currentPlanId
+        FROM Users u
+        LEFT JOIN Bugs b ON u.bug_id = b.bug_id
+        WHERE u.fid = #{fid}
+        ORDER BY u.join_date ASC
+    </select>
+
 </mapper>

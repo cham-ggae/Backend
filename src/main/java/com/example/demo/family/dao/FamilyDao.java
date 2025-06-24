@@ -2,6 +2,7 @@ package com.example.demo.family.dao;
 
 import com.example.demo.family.dto.FamilySpace;
 import com.example.demo.family.dto.FamilyMember;
+import com.example.demo.family.dto.FamilyMemberSurveyInfo;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -313,5 +314,14 @@ public interface FamilyDao {
      * 특정 가족의 메시지 카드 삭제
      */
     int deleteFamilyCardsByFid(@Param("fid") Long fid);
+
+    /**
+     * 가족 구성원들의 설문 정보 조회 (요금제 추천용)
+     * Users, Bugs, Plans 테이블을 JOIN하여 조회
+     *
+     * @param fid 가족 스페이스 ID
+     * @return 가족 구성원들의 설문 정보 목록
+     */
+    List<FamilyMemberSurveyInfo> getFamilyMembersSurveyInfo(@Param("fid") Long fid);
 
 }

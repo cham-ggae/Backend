@@ -3,6 +3,7 @@ package com.example.demo.family.controller;
 import com.example.demo.login.service.AuthenticationService;
 import com.example.demo.family.dto.*;
 import com.example.demo.family.service.FamilyService;
+import com.example.demo.family.service.FamilyPlanRecommendationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -29,6 +30,9 @@ public class FamilyController {
 
     @Autowired
     private AuthenticationService authService;
+
+    @Autowired
+    private FamilyPlanRecommendationService familyPlanRecommendationService;
 
     /**
      * 새로운 가족 스페이스 생성
@@ -298,7 +302,61 @@ public class FamilyController {
         }
     }
 
-    // FamilyController.java - 메서드명과 설명만 업데이트
+    // ========================================
+    // 8. 가족 요금제 추천
+    // ========================================
+
+    /**
+     * 가족 구성원 설문 결과 기반 요금제 추천
+     * 가족 구성원들의 설문 결과를 종합하여 최적의 요금제를 추천
+     */
+    @PostMapping(
+        value = "/{fid}/plan-recommendation",
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    @Operation(
+            summary = "가족 요금제 추천",
+            description = "가족 구성원들의 설문 결과를 바탕으로 가족에게 맞는 요금제를 추천합니다. 해당 가족의 구성원만 실행 가능합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "요금제 추천 성공"),
+            @ApiResponse(responseCode = "400", description = "설문 완료 구성원 없음 등"),
+            @ApiResponse(responseCode = "401", description = "인증 필요"),
+            @ApiResponse(responseCode = "403", description = "해당 가족의 구성원이 아님"),
+            @ApiResponse(responseCode = "404", description = "가족 스페이스가 존재하지 않음")
+    })
+    public ResponseEntity<FamilyPlanRecommendationResponse> recommendFamilyPlans(
+            @Parameter(description = "가족 스페이스 ID", required = true, example = "1")
+            @PathVariable Long fid) {
+
+        try {
+            // JWT 토큰에서 현재 인증된 사용자 ID 획득
+            Long currentUserId = authService.getCurrentUserId();
+
+            FamilyPlanRecommendationResponse response = 
+                    familyPlanRecommendationService.recommendFamilyPlans(fid, currentUserId);
+
+            if (response.isSuccess()) {
+                return ResponseEntity.ok(response);
+            } else {
+                return ResponseEntity.badRequest().body(response);
+            }
+
+        } catch (AuthenticationService.AuthenticationException e) {
+            FamilyPlanRecommendationResponse errorResponse = 
+                    FamilyPlanRecommendationResponse.failure("인증이 필요합니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+
+        } catch (Exception e) {
+            FamilyPlanRecommendationResponse errorResponse = 
+                    FamilyPlanRecommendationResponse.failure("서버 오류가 발생했습니다.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    // ========================================
+    // 9. 가족 정보 조회
+    // ========================================
 
     /**
      * 현재 사용자가 속한 가족 정보 조회 (간소화된 식물 정보 포함)

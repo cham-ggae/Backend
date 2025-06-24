@@ -1,0 +1,68 @@
+spring:
+  application:
+    name: demo
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: ${DB_PATH}
+    username: maka
+    password: ${DB_PASSWORD}
+    hikari:
+      pool-name: hikari-pool
+      maximum-pool-size: 1
+      minimum-idle: 1
+      connection-timeout: 5000
+      connection-init-sql: 'SELECT 1'
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      auto-commit: true
+
+server:
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+    context-path: /
+  port: ${PORT:8090}
+
+logging:
+  file:
+    info: logs/info.log
+    error: logs/error.log
+  level:
+    root: info
+    com.example.demo: debug
+    com.zaxxer.hikari.pool: info
+
+mybatis:
+  type-aliases-package: com.example.demo.*.dto
+  mapper-locations: 'mapper/*.xml'
+  configuration:
+    use-generated-keys: true
+
+kakao:
+  client-id: ${KAKAO}
+  redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:3000/login/callback/kakao}
+  redirect-broswer-uri: ${KAKAO_BROWSER_REDIRECT_URI:http://localhost:3000/login/callback/kakao}
+
+openai:
+  key: ${OPENAI_API_KEY}
+  model: ${OPENAI_MODEL:ft:gpt-4o-mini-2024-07-18:personal::BevJJqKj}
+
+google:
+  credentials-path: ${GOOGLE_CREDENTIALS_PATH:classpath:gcp/gcp-key.json}
+  bucket-name: ${GOOGLE_BUCKET_NAME:chamggae_test_bucket}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized

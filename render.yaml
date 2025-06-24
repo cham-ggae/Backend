@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: chamggae-backend
+    runtime: java
+    buildCommand: ./gradlew clean build -x test
+    startCommand: java -jar build/libs/chamggae.jar
+    plan: free
+    env: java17
+    envVars:
+      - key: DB_PATH
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: PORT
+        value: 8080
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+    healthCheckPath: /actuator/health
+    disk:
+      name: chamggae-disk
+      mountPath: /data
+      sizeGB: 1

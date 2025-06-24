@@ -2,7 +2,7 @@ services:
   - type: web
     name: chamggae-backend
     runtime: java
-    buildCommand: ./gradlew clean build -x test
+    buildCommand: ./gradlew clean bootJar -x test
     startCommand: java -jar build/libs/chamggae.jar
     plan: free
     env: java17

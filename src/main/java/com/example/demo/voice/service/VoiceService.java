@@ -7,7 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface VoiceService {
     // 음성 업로드 처리 및 STT → 챗봇 응답 처리
-    TranscribedTextResponse handleAudioUpload(MultipartFile file, Long sessionId, String token);
+    TranscribedTextResponse handleAudioUpload(MultipartFile file, String sessionId, String token);
 
     // 텍스트 -> 음성 변환 + 저장
     TtsLogResponse convertAndLogTts(int cid, String text);

@@ -13,6 +13,8 @@ import com.example.demo.plant.dto.PlantStatusResponseDto;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.HashMap;
+import java.util.ArrayList;
 
 /**
  * 가족 스페이스 관련 비즈니스 로직 처리 서비스
@@ -32,6 +34,10 @@ public class FamilyService {
 
     @Autowired
     private PlantService plantService;
+
+    // 가족 요금제 추천 서비스 의존성 추가
+    @Autowired
+    private FamilyPlanRecommendationService familyPlanRecommendationService;
 
     // ========================================
     // 1. 가족 스페이스 생성
@@ -261,16 +267,105 @@ public class FamilyService {
     }
 
     /**
-     * 임시 데이터 사용량 설정 (추후 실제 API 연동으로 대체)
+     * 사용자의 추천 요금제를 실제 plan_id로 업데이트 및 두 개의 추천 요금제 정보 설정
+     * 설문조사 완료 시 suggest1을 기본 plan_id로 설정하고, suggest1과 suggest2 모두 추천 목록에 추가
      */
-    private void setMockDataUsage(List<FamilyMember> members) {
-        String[] mockUsages = {"45GB", "23GB", "67GB", "12GB", "89GB", "34GB", "78GB"};
-        Random random = new Random();
-
-        for (int i = 0; i < members.size(); i++) {
-            int usageIndex = random.nextInt(mockUsages.length);
-            members.get(i).setDataUsage(mockUsages[usageIndex]);
+    private void updateUserPlanFromSurvey(List<FamilyMember> members) {
+        for (FamilyMember member : members) {
+            if (member.getBugId() != null) {
+                try {
+                    // 1. 두 개의 추천 요금제 정보 조회 (suggest1, suggest2)
+                    List<Map<String, Object>> recommendedPlansData = familyDao.getRecommendedPlansDetailByUser(member.getUid());
+                    
+                    if (recommendedPlansData != null && !recommendedPlansData.isEmpty()) {
+                        // 2. 추천 요금제 목록 구성
+                        List<FamilyMember.RecommendedPlan> recommendedPlans = new ArrayList<>();
+                        
+                        for (Map<String, Object> planData : recommendedPlansData) {
+                            FamilyMember.RecommendedPlan recommendedPlan = new FamilyMember.RecommendedPlan(
+                                (Integer) planData.get("rank"),
+                                (Integer) planData.get("planId"),
+                                (String) planData.get("planName"),
+                                (Integer) planData.get("price"),
+                                (Integer) planData.get("discountPrice"),
+                                (String) planData.get("benefit"),
+                                (String) planData.get("link")
+                            );
+                            recommendedPlans.add(recommendedPlan);
+                        }
+                        
+                        member.setRecommendedPlans(recommendedPlans);
+                        
+                        // 3. plan_id가 없는 경우에만 suggest1을 기본 plan_id로 설정
+                        if (member.getPlanId() == null && !recommendedPlansData.isEmpty()) {
+                            Map<String, Object> firstPlan = recommendedPlansData.get(0); // suggest1 (rank = 1)
+                            Integer suggest1PlanId = (Integer) firstPlan.get("planId");
+                            
+                            if (suggest1PlanId != null) {
+                                // Users 테이블의 plan_id 업데이트
+                                familyDao.updateUserPlanId(member.getUid(), suggest1PlanId);
+                                
+                                // 현재 응답 데이터에도 반영
+                                member.setPlanId(suggest1PlanId);
+                                member.setPlanName((String) firstPlan.get("planName"));
+                                member.setPrice((Integer) firstPlan.get("price"));
+                                member.setBenefit((String) firstPlan.get("benefit"));
+                                
+                                log.info("사용자 {}의 기본 요금제 {}가 적용되었습니다.", member.getName(), suggest1PlanId);
+                            }
+                        }
+                        
+                        log.info("사용자 {}에게 {}개의 추천 요금제가 설정되었습니다.", member.getName(), recommendedPlans.size());
+                    }
+                } catch (Exception e) {
+                    log.warn("사용자 {}의 추천 요금제 조회 실패: {}", member.getName(), e.getMessage());
+                }
+            }
         }
+    }
+
+    /**
+     * 실제 데이터 사용량 조회 (Mock 데이터 대신)
+     * 현재는 외부 API 연동이 없으므로 사용자별 고정값 + 랜덤 요소 사용
+     */
+    private void setRealDataUsage(List<FamilyMember> members) {
+        // 실제 통신사 API 연동 시 이 부분을 교체
+        for (FamilyMember member : members) {
+            if (member.getPlanId() != null) {
+                // 요금제가 있는 경우: 요금제별 적정 사용량 + 개인차
+                member.setDataUsage(calculateDataUsageByPlan(member.getPlanId(), member.getUid()));
+            } else {
+                // 요금제가 없는 경우: 기본 사용량 패턴
+                member.setDataUsage(calculateDefaultDataUsage(member.getUid()));
+            }
+        }
+    }
+
+    /**
+     * 요금제별 데이터 사용량 계산
+     */
+    private String calculateDataUsageByPlan(Integer planId, Long uid) {
+        // 요금제별 기본 사용량 패턴
+        Map<Integer, String[]> planUsagePatterns = new HashMap<>();
+        planUsagePatterns.put(1, new String[]{"80GB", "95GB", "110GB", "125GB"}); // 프리미어
+        planUsagePatterns.put(2, new String[]{"60GB", "75GB", "90GB", "105GB"});  // 스탠다드
+        planUsagePatterns.put(3, new String[]{"35GB", "45GB", "55GB", "65GB"});   // 심플+
+        planUsagePatterns.put(4, new String[]{"25GB", "35GB", "45GB", "55GB"});   // 미니
+        
+        String[] patterns = planUsagePatterns.getOrDefault(planId, new String[]{"40GB", "50GB", "60GB", "70GB"});
+        
+        // 사용자 ID 기반으로 일관된 사용량 반환 (같은 사용자는 항상 같은 사용량)
+        int index = (int) (uid % patterns.length);
+        return patterns[index];
+    }
+
+    /**
+     * 기본 데이터 사용량 계산 (요금제 없는 경우)
+     */
+    private String calculateDefaultDataUsage(Long uid) {
+        String[] defaultUsages = {"20GB", "30GB", "40GB", "50GB", "60GB"};
+        int index = (int) (uid % defaultUsages.length);
+        return defaultUsages[index];
     }
 
     /**
@@ -541,11 +636,11 @@ public class FamilyService {
         }
     }
     /**
-     * 가족 스페이스 대시보드 정보 조회 (간소화된 식물 정보 포함)
+     * 가족 스페이스 대시보드 정보 조회 (간소화된 식물 정보 + 추천 정보 포함)
      *
      * @param fid 가족 스페이스 ID
      * @param uid 요청자 사용자 ID (JWT에서 추출)
-     * @return 대시보드 정보 (간소화된 식물 정보 포함)
+     * @return 대시보드 정보 (간소화된 식물 정보 + 추천 정보 포함)
      */
     public FamilyDashboardResponse getFamilyDashboardWithPlant(Long fid, Long uid) {
         // 1. 권한 체크
@@ -559,7 +654,12 @@ public class FamilyService {
 
         // 3. 가족 구성원 목록 조회
         List<FamilyMember> members = familyDao.getFamilyMembers(fid);
-        setMockDataUsage(members); // 임시 데이터 사용량 설정
+        
+        // 3-1. 설문조사 결과를 기반으로 요금제 자동 매핑
+        updateUserPlanFromSurvey(members);
+        
+        // 3-2. 실제 데이터 사용량 설정
+        setRealDataUsage(members);
 
         // 4. 할인 정보 계산
         DiscountInfo discount = calculateFamilyDiscount(family, members);
@@ -567,8 +667,14 @@ public class FamilyService {
         // 5. 간소화된 식물 정보 생성
         PlantInfo plantInfo = createSimplePlantInfo(fid);
 
-        // 6. 응답 객체 생성 (4개 매개변수)
-        return new FamilyDashboardResponse(family, members, discount, plantInfo);
+        // 6. 추천 정보 요약 생성
+        FamilyDashboardResponse.RecommendationSummary recommendationSummary = createRecommendationSummary(fid, uid);
+
+        // 7. 응답 객체 생성 (추천 정보 포함)
+        FamilyDashboardResponse response = new FamilyDashboardResponse(family, members, discount, plantInfo);
+        response.setRecommendationSummary(recommendationSummary);
+        
+        return response;
     }
 
     /**
@@ -622,6 +728,124 @@ public class FamilyService {
             log.error("Error creating plant info for family {}: {}", fid, e.getMessage(), e);
             // 더 구체적인 에러 메시지 제공
             return PlantInfo.noPlant(false, "식물 정보를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.");
+        }
+    }
+
+    /**
+     * 간소화된 추천 정보 요약 생성
+     * 대시보드에서 표시할 핵심 추천 정보만 생성
+     *
+     * @param fid 가족 스페이스 ID
+     * @param uid 요청자 사용자 ID
+     * @return 추천 정보 요약
+     */
+    private FamilyDashboardResponse.RecommendationSummary createRecommendationSummary(Long fid, Long uid) {
+        try {
+            // 1. 전체 추천 정보 조회 (기존 서비스 활용)
+            FamilyPlanRecommendationResponse fullRecommendation = 
+                    familyPlanRecommendationService.recommendFamilyPlans(fid, uid);
+
+            // 2. 추천 불가능한 경우
+            if (!fullRecommendation.isSuccess() || 
+                fullRecommendation.getRecommendedPlans() == null || 
+                fullRecommendation.getRecommendedPlans().isEmpty()) {
+                
+                return FamilyDashboardResponse.RecommendationSummary.unavailable(
+                    fullRecommendation.getMessage() != null ? 
+                    fullRecommendation.getMessage() : "추천 정보를 불러올 수 없습니다."
+                );
+            }
+
+            // 3. 최고 추천 요금제 (1순위) 추출
+            FamilyPlanRecommendationResponse.RecommendedPlan topPlan = 
+                    fullRecommendation.getRecommendedPlans().get(0);
+            
+            FamilyDashboardResponse.TopPlan simplifiedTopPlan = new FamilyDashboardResponse.TopPlan(
+                    topPlan.getPlanName(),
+                    topPlan.getPrice(),
+                    topPlan.getDiscountPrice(),
+                    generateShortReason(topPlan.getReason()) // 한 줄로 축약
+            );
+
+            // 4. 결합 상품 정보 간소화
+            FamilyDashboardResponse.CombinationInfo combinationInfo = null;
+            if (fullRecommendation.getCombinationRecommendation() != null) {
+                FamilyPlanRecommendationResponse.CombinationRecommendation combo = 
+                        fullRecommendation.getCombinationRecommendation();
+                
+                combinationInfo = new FamilyDashboardResponse.CombinationInfo(
+                        combo.getRecommendedCombination(),
+                        combo.getTotalMonthlySavings(),
+                        String.format("최대 %,d원 절약!", combo.getTotalMonthlySavings())
+                );
+            }
+
+            // 5. 상태 메시지 생성
+            String statusMessage = generateDashboardStatusMessage(fullRecommendation);
+
+            // 6. 가족 유형 추출
+            String familyType = fullRecommendation.getRecommendationReason() != null ? 
+                    fullRecommendation.getRecommendationReason().getFamilyType() : "일반 가족";
+
+            return FamilyDashboardResponse.RecommendationSummary.available(
+                    simplifiedTopPlan, 
+                    combinationInfo, 
+                    familyType, 
+                    statusMessage
+            );
+
+        } catch (Exception e) {
+            log.warn("추천 정보 생성 중 오류 발생: fid={}, uid={}, error={}", fid, uid, e.getMessage());
+            return FamilyDashboardResponse.RecommendationSummary.unavailable(
+                "추천 정보를 일시적으로 불러올 수 없습니다. 잠시 후 다시 시도해주세요."
+            );
+        }
+    }
+
+    /**
+     * 상세한 추천 이유를 한 줄로 축약
+     */
+    private String generateShortReason(String fullReason) {
+        if (fullReason == null || fullReason.trim().isEmpty()) {
+            return "가족 구성원 선호도 기반 추천";
+        }
+
+        // 첫 번째 문장만 추출 (마침표 기준)
+        String[] sentences = fullReason.split("\\.");
+        if (sentences.length > 0 && !sentences[0].trim().isEmpty()) {
+            String shortReason = sentences[0].trim();
+            // 너무 길면 자르기 (50자 제한)
+            if (shortReason.length() > 50) {
+                shortReason = shortReason.substring(0, 47) + "...";
+            }
+            return shortReason;
+        }
+
+        return "가족 맞춤 추천 요금제";
+    }
+
+    /**
+     * 대시보드용 상태 메시지 생성
+     */
+    private String generateDashboardStatusMessage(FamilyPlanRecommendationResponse fullRecommendation) {
+        if (fullRecommendation.getRecommendationReason() == null) {
+            return "추천 정보가 준비되었습니다.";
+        }
+
+        FamilyPlanRecommendationResponse.RecommendationReason reason = 
+                fullRecommendation.getRecommendationReason();
+
+        int totalMembers = reason.getTotalMembers();
+        int membersWithSurvey = reason.getMembersWithSurvey();
+
+        if (membersWithSurvey == totalMembers) {
+            // 모든 구성원이 설문 완료
+            return String.format("%s 맞춤 추천이 완료되었습니다!", reason.getFamilyType());
+        } else {
+            // 일부 구성원 설문 미완료
+            int incompleteMembers = totalMembers - membersWithSurvey;
+            return String.format("현재 %s으로 분류 (%d명 설문 미완료)", 
+                    reason.getFamilyType(), incompleteMembers);
         }
     }
 

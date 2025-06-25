@@ -1,7 +1,9 @@
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: ${DATABASE_URL} # Render가 자동으로 제공하는 PostgreSQL URL
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/demo}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:password}
     hikari:
       pool-name: hikari-pool-prod
       maximum-pool-size: 3 # Render Free tier 최적화
@@ -14,6 +16,15 @@ spring:
       initialization-fail-timeout: 120000 # 2분
       keepalive-time: 300000 # 연결 유지
       validation-timeout: 30000 # 검증 타임아웃
+      connection-init-sql: 'SELECT 1'
+      # PostgreSQL SSL 설정 (더 유연하게)
+      data-source-properties:
+        ssl: true
+        sslmode: prefer
+        sslfactory: org.postgresql.ssl.NonValidatingFactory
+        # 연결 검증을 위한 추가 설정
+        applicationName: chamggae-backend
+        tcpKeepAlive: true
 
 server:
   servlet:
@@ -58,6 +69,12 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+      show-components: always
+  health:
+    db:
+      enabled: true
+    datasource:
+      enabled: true
 
 cors:
   allowed-origins:
@@ -90,7 +107,9 @@ logging:
   level:
     root: info
     com.example.demo: info
-    com.zaxxer.hikari: warn # 프로덕션에서는 warn 레벨
-    com.zaxxer.hikari.pool: warn
+    com.zaxxer.hikari: debug # 데이터베이스 연결 디버깅을 위해 debug로 변경
+    com.zaxxer.hikari.pool: debug
+    org.springframework.jdbc: debug
+    org.springframework.boot.autoconfigure.jdbc: debug
   file:
     name: logs/application.log

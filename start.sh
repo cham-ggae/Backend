@@ -17,6 +17,8 @@ export JAVA_OPTS="-Xmx350m -Xms150m \
 echo "=== Environment Check ==="
 echo "SPRING_PROFILES_ACTIVE: $SPRING_PROFILES_ACTIVE"
 echo "DATABASE_URL exists: $(if [ -n "$DATABASE_URL" ]; then echo "YES"; else echo "NO"; fi)"
+echo "DB_USERNAME exists: $(if [ -n "$DB_USERNAME" ]; then echo "YES"; else echo "NO"; fi)"
+echo "DB_PASSWORD exists: $(if [ -n "$DB_PASSWORD" ]; then echo "YES"; else echo "NO"; fi)"
 echo "PORT: $PORT"
 
 # 프로덕션 환경으로 애플리케이션 시작

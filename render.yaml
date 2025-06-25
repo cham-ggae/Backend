@@ -11,6 +11,18 @@ services:
         value: prod
       - key: PORT
         value: 8080
+      - key: DATABASE_URL
+        fromDatabase:
+          name: modi-db
+          property: connectionString
+      - key: DB_USERNAME
+        fromDatabase:
+          name: modi-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: modi-db
+          property: password
       - key: KAKAO
         sync: false
       - key: KAKAO_REDIRECT_URI

@@ -27,10 +27,13 @@ public class WebSocketConfig implements WebSocketConfigurer {
         
         if (isProd) {
             registry.addHandler(plantWebSocketHandler, "/ws/plant")
-                    .setAllowedOrigins("https://modi-backend-th1n.onrender.com");
+                    .setAllowedOrigins(
+                        "https://modi-backend-th1n.onrender.com",
+                        "http://localhost:3000"
+                    );
         } else {
             registry.addHandler(plantWebSocketHandler, "/ws/plant")
-                    .setAllowedOrigins("http://localhost:3000", "https://localhost:3000");
+                    .setAllowedOrigins("http://localhost:3000");
         }
     }
 }

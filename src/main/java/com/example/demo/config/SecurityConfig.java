@@ -2,6 +2,7 @@ package com.example.demo.config;
 
 import com.example.demo.provider.JwtFilter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +23,7 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig {
     private final JwtFilter jwtFilter;
 
@@ -64,24 +66,33 @@ public class SecurityConfig {
         
         // 환경별 허용 URL 설정
         boolean isProd = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+        String[] activeProfiles = environment.getActiveProfiles();
+        
+        log.info("Active profiles: {}", Arrays.toString(activeProfiles));
+        log.info("Is production environment: {}", isProd);
         
         if (isProd) {
-            // 프로덕션 환경
-            config.setAllowedOrigins(List.of(
-                "https://modi-backend-th1n.onrender.com"
-            ));
+            // 프로덕션 환경 - 백엔드 도메인과 개발용 localhost 모두 허용
+            List<String> allowedOrigins = List.of(
+                "https://modi-backend-th1n.onrender.com",
+                "http://localhost:3000"
+            );
+            config.setAllowedOrigins(allowedOrigins);
+            log.info("Production CORS allowed origins: {}", allowedOrigins);
         } else {
             // 개발 환경
-            config.setAllowedOrigins(List.of(
-                "http://localhost:3000",
-                "http://localhost:8080",
-                "http://localhost:8090"
-            ));
+            List<String> allowedOrigins = List.of(
+                "http://localhost:3000"
+            );
+            config.setAllowedOrigins(allowedOrigins);
+            log.info("Development CORS allowed origins: {}", allowedOrigins);
         }
         
         config.setAllowedHeaders(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        config.setExposedHeaders(List.of("Authorization"));
+        config.setExposedHeaders(List.of("Authorization", "Content-Type"));
+        config.setMaxAge(3600L); // preflight 요청 캐시 시간 (1시간)
+        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;

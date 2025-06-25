@@ -104,5 +104,6 @@ cors:
     - PUT
     - DELETE
     - OPTIONS
+    - PATCH
   allowed-headers: '*'
   allow-credentials: true

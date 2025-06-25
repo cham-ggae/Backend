@@ -6,8 +6,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
 
-import java.util.Objects;
-
 @SpringBootApplication(exclude = {
 		JpaRepositoriesAutoConfiguration.class,
 		HibernateJpaAutoConfiguration.class

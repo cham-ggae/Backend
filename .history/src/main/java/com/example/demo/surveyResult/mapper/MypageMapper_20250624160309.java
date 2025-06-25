@@ -15,8 +15,7 @@ public interface MypageMapper {
                         p.price AS price,
                         p.discount_price AS discountPrice,
                         p.benefit AS benefit,
-                        p.link AS link,
-                        h.created_at AS createdAt
+                        p.link AS link
                     FROM History h
                     JOIN Bugs b ON h.bug_id = b.bug_id
                     JOIN Plans p ON b.suggest1 = p.plan_id
@@ -30,8 +29,7 @@ public interface MypageMapper {
                         p.price AS price,
                         p.discount_price AS discountPrice,
                         p.benefit AS benefit,
-                        p.link AS link,
-                        h.created_at AS createdAt
+                        p.link AS link
                     FROM History h
                     JOIN Bugs b ON h.bug_id = b.bug_id
                     JOIN Plans p ON b.suggest2 = p.plan_id

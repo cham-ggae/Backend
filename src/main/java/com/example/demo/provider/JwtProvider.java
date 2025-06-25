@@ -3,9 +3,12 @@ package com.example.demo.provider;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
@@ -13,6 +16,10 @@ public class JwtProvider {
     
     @Value("${jwtKey:default-secret-key-for-development}")
     private String secret;
+    
+    private SecretKey getSigningKey() {
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
     // 액세스 토큰: 10분
 //    private static final long ACCESS_VALIDITY  = 1000L * 60 * 60 * 2;
     private static final long ACCESS_VALIDITY  = 1000L * 60 * 10;
@@ -26,7 +33,7 @@ public class JwtProvider {
                 .setSubject(email)
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + ACCESS_VALIDITY))
-                .signWith(SignatureAlgorithm.HS256, secret)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -37,14 +44,15 @@ public class JwtProvider {
                 .setSubject(email)
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + REFRESH_VALIDITY))
-                .signWith(SignatureAlgorithm.HS256, secret)
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
     /** 토큰에서 이메일(Subject) 추출 */
     public String getEmail(String token) {
-        return Jwts.parser()
-                .setSigningKey(secret)
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
@@ -53,7 +61,7 @@ public class JwtProvider {
     /** 토큰 유효성 검증 */
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(secret).parseClaimsJws(token);
+            Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;

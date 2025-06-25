@@ -26,14 +26,17 @@ public class WebSocketConfig implements WebSocketConfigurer {
         boolean isProd = Arrays.asList(environment.getActiveProfiles()).contains("prod");
         
         if (isProd) {
+            // 프로덕션 환경 - 모든 필요한 도메인 허용
             registry.addHandler(plantWebSocketHandler, "/ws/plant")
                     .setAllowedOrigins(
                         "https://modi-backend-th1n.onrender.com",
-                        "http://localhost:3000"
+                        "http://localhost:3000",
+                        "https://localhost:3000"
                     );
         } else {
+            // 개발 환경
             registry.addHandler(plantWebSocketHandler, "/ws/plant")
-                    .setAllowedOrigins("http://localhost:3000");
+                    .setAllowedOrigins("http://localhost:3000", "https://localhost:3000");
         }
     }
 }

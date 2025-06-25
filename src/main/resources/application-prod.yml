@@ -98,6 +98,10 @@ cors:
   allowed-origins:
     - 'https://modi-backend-th1n.onrender.com'
     - 'http://localhost:3000'
+    - 'https://localhost:3000'
+    - 'https://modi-backend-th1n.onrender.com'
+    - 'http://localhost:8080'
+    - 'http://localhost:8090'
   allowed-methods:
     - GET
     - POST
@@ -105,5 +109,16 @@ cors:
     - DELETE
     - OPTIONS
     - PATCH
+    - HEAD
+    - PATCH
   allowed-headers: '*'
+  exposed-headers:
+    - 'Authorization'
+    - 'Content-Type'
+    - 'X-Requested-With'
+    - 'Accept'
+    - 'Origin'
+    - 'Access-Control-Request-Method'
+    - 'Access-Control-Request-Headers'
   allow-credentials: true
+  max-age: 3600

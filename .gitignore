@@ -47,3 +47,5 @@ out/
 .vscode/
 
 **/src/main/resources/gcp/
+# 로컬 히스토리 백업 무시
+.history/

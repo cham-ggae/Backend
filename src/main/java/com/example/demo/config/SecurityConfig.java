@@ -81,24 +81,6 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         
-        // 정확한 Origin 허용
-        config.setAllowedOrigins(List.of(
-            "http://localhost:3000",
-            "https://localhost:3000", 
-            "https://modi-backend-th1n.onrender.com",
-            "http://localhost:8080",
-            "http://localhost:8090"
-        ));
-        
-        // 패턴 기반 Origin 허용 (보안상 필요한 경우에만)
-        config.setAllowedOriginPatterns(List.of(
-            "http://localhost:*",
-            "https://localhost:*",
-            "https://*.onrender.com"
-        ));
-        
-        // 모든 헤더 허용
-        
         // 환경별 허용 URL 설정
         boolean isProd = Arrays.asList(environment.getActiveProfiles()).contains("prod");
         String[] activeProfiles = environment.getActiveProfiles();
@@ -117,12 +99,22 @@ public class SecurityConfig {
         } else {
             // 개발 환경
             List<String> allowedOrigins = List.of(
-                "http://localhost:3000"
+                "http://localhost:3000",
+                "http://localhost:8080",
+                "http://localhost:8090"
             );
             config.setAllowedOrigins(allowedOrigins);
             log.info("Development CORS allowed origins: {}", allowedOrigins);
         }
         
+        // 패턴 기반 Origin 허용 (보안상 필요한 경우에만)
+        config.setAllowedOriginPatterns(List.of(
+            "http://localhost:*",
+            "https://localhost:*",
+            "https://*.onrender.com"
+        ));
+        
+        // 모든 헤더 허용
         config.setAllowedHeaders(List.of("*"));
         
         // 모든 필요한 HTTP 메서드 허용

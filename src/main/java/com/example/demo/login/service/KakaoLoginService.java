@@ -90,9 +90,11 @@ public class KakaoLoginService implements KakaoLogin {
         );
 
         Map<String, Object> userInfo = userInfoResponse.getBody();
+        @SuppressWarnings("unchecked")
         Map<String, Object> kakaoAccount = (Map<String, Object>) userInfo.get("kakao_account");
         // 받아온 유저 정보들
         String email = (String) kakaoAccount.get("email");
+        @SuppressWarnings("unchecked")
         Map<String, Object> profileMap = (Map<String, Object>) kakaoAccount.get("profile");
 
         String nickname = null;

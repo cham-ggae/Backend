@@ -47,7 +47,7 @@ public class SwaggerConfig {
         boolean isProd = Arrays.asList(environment.getActiveProfiles()).contains("prod");
         
         if (isProd) {
-            // 프로덕션 환경 - 실제 배포 URL
+            // 프로덕션 환경
             servers.add(new Server().url("https://modi-backend-th1n.onrender.com").description("프로덕션 서버"));
         } else {
             // 개발 환경

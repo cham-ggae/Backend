@@ -38,7 +38,13 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // 기존 인증 없이 접근 가능한 엔드포인트
-                        .requestMatchers("/authorize", "/oauth2/callback/kakao", "/logout", "/kakao", "/refresh","/ws/**").permitAll()
+                        .requestMatchers("/authorize", "/oauth2/callback/kakao", "/logout", "/kakao", "/refresh").permitAll()
+                        
+                        // WebSocket 관련
+                        .requestMatchers("/ws/**").permitAll()
+                        
+                        // Actuator health check
+                        .requestMatchers("/actuator/health").permitAll()
 
                         // Swagger UI 관련 경로들 (개발 환경용)
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
@@ -46,12 +52,23 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-resources/**").permitAll()
                         .requestMatchers("/webjars/**").permitAll()
 
+                        // CORS preflight 요청 허용 (모든 경로)
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                        
+                        // 에러 페이지
+                        .requestMatchers("/error").permitAll()
+
                         // 사용자 추가 정보 업데이트 엔드포인트 (인증 필요)
                         .requestMatchers("/api/user/additional-info").authenticated()
+                        
+                        // 사용자 정보 조회 (인증 필요)
+                        .requestMatchers("/user").authenticated()
 
                         // 기타 모든 요청
                         .anyRequest().authenticated()
                 )
+                // JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 배치
+                // 이렇게 하면 CORS 필터 → JWT 필터 → UsernamePasswordAuthenticationFilter 순서가 됨
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .formLogin(AbstractHttpConfigurer::disable) // 기본 로그인 페이지 비활성화
                 .logout(AbstractHttpConfigurer::disable);   // 기본 로그아웃 비활성화
@@ -82,16 +99,42 @@ public class SecurityConfig {
         } else {
             // 개발 환경
             List<String> allowedOrigins = List.of(
-                "http://localhost:3000"
+                "http://localhost:3000",
+                "http://localhost:8080",
+                "http://localhost:8090"
             );
             config.setAllowedOrigins(allowedOrigins);
             log.info("Development CORS allowed origins: {}", allowedOrigins);
         }
         
+        // 패턴 기반 Origin 허용 (보안상 필요한 경우에만)
+        config.setAllowedOriginPatterns(List.of(
+            "http://localhost:*",
+            "https://localhost:*",
+            "https://*.onrender.com"
+        ));
+        
+        // 모든 헤더 허용
         config.setAllowedHeaders(List.of("*"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        config.setExposedHeaders(List.of("Authorization", "Content-Type"));
-        config.setMaxAge(3600L); // preflight 요청 캐시 시간 (1시간)
+        
+        // 모든 필요한 HTTP 메서드 허용
+        config.setAllowedMethods(List.of(
+            "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"
+        ));
+        
+        // 클라이언트에서 읽을 수 있는 헤더 설정
+        config.setExposedHeaders(List.of(
+            "Authorization", 
+            "Content-Type", 
+            "X-Requested-With",
+            "Accept",
+            "Origin",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers"
+        ));
+        
+        // preflight 요청 캐시 시간 (1시간)
+        config.setMaxAge(3600L);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

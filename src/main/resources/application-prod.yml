@@ -2,8 +2,8 @@ spring:
   application:
     name: demo
   datasource:
-    driver-class-name: org.mariadb.jdbc.Driver
-    url: ${DB_PATH}
+    driver-class-name: ${DB_DRIVER:org.mariadb.jdbc.Driver}
+    url: ${DB_INTERNAL_URL:${DB_PATH}}
     username: ${DB_USERNAME:maka}
     password: ${DB_PASSWORD}
     hikari:
@@ -22,11 +22,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    database-platform: org.hibernate.dialect.MariaDBDialect
+    database-platform: ${DB_DIALECT:org.hibernate.dialect.MariaDBDialect}
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MariaDBDialect
+        dialect: ${DB_DIALECT:org.hibernate.dialect.MariaDBDialect}
         format_sql: false
         use_sql_comments: false
         jdbc:

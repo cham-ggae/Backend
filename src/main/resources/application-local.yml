@@ -1,19 +1,19 @@
 spring:
   datasource:
-    driver-class-name: org.postgresql.Driver
-    url: ${DATABASE_URL} # Render가 자동으로 제공하는 PostgreSQL URL
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: ${DB_PATH:jdbc:mariadb://localhost:3306/demo?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true}
+    username: ${DB_MARIA_USERNAME:root}
+    password: ${DB_MARIA_PASSWORD:password}
     hikari:
-      pool-name: hikari-pool-prod
-      maximum-pool-size: 3 # Render Free tier 최적화
-      minimum-idle: 1
-      connection-timeout: 60000 # 타임아웃 증가 (네트워크 지연 고려)
-      idle-timeout: 300000 # 5분
-      max-lifetime: 900000 # 15분
+      pool-name: hikari-pool-local
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 20000
+      connection-init-sql: 'SELECT 1'
+      idle-timeout: 600000
+      max-lifetime: 1800000
       auto-commit: true
       leak-detection-threshold: 60000
-      initialization-fail-timeout: 120000 # 2분
-      keepalive-time: 300000 # 연결 유지
-      validation-timeout: 30000 # 검증 타임아웃
 
 server:
   servlet:
@@ -61,7 +61,6 @@ management:
 
 cors:
   allowed-origins:
-    - 'https://modi-backend-th1n.onrender.com'
     - 'http://localhost:3000'
     - 'https://localhost:3000'
     - 'http://localhost:8080'
@@ -89,8 +88,8 @@ cors:
 logging:
   level:
     root: info
-    com.example.demo: info
-    com.zaxxer.hikari: warn # 프로덕션에서는 warn 레벨
-    com.zaxxer.hikari.pool: warn
+    com.example.demo: debug
+    com.zaxxer.hikari: debug
+    com.zaxxer.hikari.pool: debug
   file:
     name: logs/application.log

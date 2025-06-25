@@ -3,24 +3,14 @@ services:
     name: chamggae-backend
     runtime: java
     buildCommand: ./gradlew clean bootJar -x test
-    startCommand: java -Dspring.profiles.active=prod -jar build/libs/chamggae.jar
+    startCommand: chmod +x start.sh && ./start.sh
     plan: free
     env: java17
     envVars:
-      - key: DB_DRIVER
-        value: org.postgresql.Driver
-      - key: DATABASE_URL
-        sync: false # Render에서 자동으로 제공하는 PostgreSQL URL
-      - key: DB_INTERNAL_URL
-        sync: false
-      - key: DB_POSTGRES_USERNAME
-        sync: false
-      - key: DB_POSTGRES_PASSWORD
-        sync: false
-      - key: PORT
-        value: 8080
       - key: SPRING_PROFILES_ACTIVE
         value: prod
+      - key: PORT
+        value: 8080
       - key: KAKAO
         sync: false
       - key: KAKAO_REDIRECT_URI
@@ -42,3 +32,10 @@ services:
       name: chamggae-disk
       mountPath: /data
       sizeGB: 1
+
+# PostgreSQL 데이터베이스 추가
+databases:
+  - name: modi-db
+    databaseName: modi-db
+    user: modi_user
+    plan: free

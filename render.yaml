@@ -3,18 +3,40 @@ services:
     name: chamggae-backend
     runtime: java
     buildCommand: ./gradlew clean bootJar -x test
-    startCommand: java -jar build/libs/chamggae.jar
+    startCommand: java -Dspring.profiles.active=prod -jar build/libs/chamggae.jar
     plan: free
     env: java17
     envVars:
-      - key: DB_PATH
+      - key: DB_DRIVER
+        value: org.postgresql.Driver
+      - key: DATABASE_URL
+        sync: false # Render에서 자동으로 제공하는 PostgreSQL URL
+      - key: DB_INTERNAL_URL
         sync: false
-      - key: DB_PASSWORD
+      - key: DB_POSTGRES_USERNAME
+        sync: false
+      - key: DB_POSTGRES_PASSWORD
         sync: false
       - key: PORT
         value: 8080
       - key: SPRING_PROFILES_ACTIVE
         value: prod
+      - key: KAKAO
+        sync: false
+      - key: KAKAO_REDIRECT_URI
+        sync: false
+      - key: KAKAO_BROWSER_REDIRECT_URI
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        sync: false
+      - key: GOOGLE_CREDENTIALS_PATH
+        sync: false
+      - key: GOOGLE_BUCKET_NAME
+        sync: false
+      - key: jwtKey
+        sync: false
     healthCheckPath: /actuator/health
     disk:
       name: chamggae-disk

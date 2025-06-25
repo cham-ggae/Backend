@@ -2,13 +2,13 @@ spring:
   application:
     name: demo
   datasource:
-    driver-class-name: ${DB_DRIVER:org.mariadb.jdbc.Driver}
-    url: ${DB_INTERNAL_URL:${DB_PATH}} # 프로덕션에서는 Internal URL 우선 사용
+    driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
+    url: ${DATABASE_URL:${DB_INTERNAL_URL:${DB_PATH}}} # Render는 DATABASE_URL 우선 사용
     username: ${DB_POSTGRES_USERNAME:${DB_USERNAME:maka}}
     password: ${DB_POSTGRES_PASSWORD:${DB_PASSWORD}}
     hikari:
       pool-name: hikari-pool
-      maximum-pool-size: 1
+      maximum-pool-size: 2
       minimum-idle: 1
       connection-timeout: 30000
       connection-init-sql: 'SELECT 1'
@@ -73,13 +73,12 @@ management:
     health:
       show-details: when-authorized
 
-# CORS 설정 (필요시)
+# CORS 설정
 cors:
   allowed-origins:
     - 'https://modi-backend-th1n.onrender.com'
     - 'http://localhost:3000'
     - 'https://localhost:3000'
-    - 'https://modi-backend-th1n.onrender.com'
     - 'http://localhost:8080'
     - 'http://localhost:8090'
   allowed-methods:
@@ -90,7 +89,6 @@ cors:
     - OPTIONS
     - PATCH
     - HEAD
-    - PATCH
   allowed-headers: '*'
   exposed-headers:
     - 'Authorization'

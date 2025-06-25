@@ -3,10 +3,15 @@ package com.example.demo;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
 
 import java.util.Objects;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+		JpaRepositoriesAutoConfiguration.class,
+		HibernateJpaAutoConfiguration.class
+})
 public class DemoApplication {
 
 	public static void main(String[] args) {
@@ -16,6 +21,8 @@ public class DemoApplication {
 				.load();
 		
 		// 데이터베이스 설정
+		setSystemPropertyIfExists(dotenv, "DB_MARIA_PASSWORD");
+		setSystemPropertyIfExists(dotenv, "DB_MARIA_USERNAME");
 		setSystemPropertyIfExists(dotenv, "DB_PASSWORD");
 		setSystemPropertyIfExists(dotenv, "DB_PATH");
 		

@@ -24,7 +24,7 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.4'
@@ -35,10 +35,8 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 	compileOnly 'org.projectlombok:lombok'
-	
-	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'  // 로컬용
-	runtimeOnly 'org.postgresql:postgresql'              // 프로덕션용
-	
+	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.4'
@@ -56,12 +54,12 @@ tasks.named('test') {
 }
 
 jar {
-	enabled = false // plain jar 비활성화
-	archiveClassifier = '' // 빈 classifier
+	enabled = false
+	archiveClassifier = ''
 }
 
 bootJar {
-	archiveBaseName.set('chamggae') // 빌드 파일명 항상 chamggae.jar
-	archiveVersion.set('') // 빌드 버전 제거
-	archiveClassifier.set('') // classifier도 제거
+	archiveBaseName.set('chamggae')
+	archiveVersion.set('')
+	archiveClassifier.set('')
 }

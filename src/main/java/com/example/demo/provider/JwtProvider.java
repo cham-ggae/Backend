@@ -14,7 +14,7 @@ import java.util.Date;
 @Component
 public class JwtProvider {
     
-    @Value("${jwtKey:default-secret-key-for-development}")
+    @Value("${jwtKey}")
     private String secret;
     
     private SecretKey getSigningKey() {

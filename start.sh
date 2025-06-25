@@ -3,8 +3,8 @@
 # Create logs directory if it doesn't exist
 mkdir -p logs
 
-# Render Free Tier 메모리 최적화 (512MB RAM 제한)
-export JAVA_OPTS="-Xmx350m -Xms150m \
+# RDS 환경 메모리 최적화
+export JAVA_OPTS="-Xmx400m -Xms200m \
   -server \
   -XX:+UseG1GC \
   -XX:MaxGCPauseMillis=100 \

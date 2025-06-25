@@ -1,13 +1,13 @@
 spring:
   datasource:
-    driver-class-name: org.postgresql.Driver
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/demo}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:password}
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: ${DATABASE_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     hikari:
       pool-name: hikari-pool-prod
-      maximum-pool-size: 3 # Render Free tier 최적화
-      minimum-idle: 1
+      maximum-pool-size: 5 # RDS 환경에 맞게 조정
+      minimum-idle: 2
       connection-timeout: 60000 # 타임아웃 증가 (네트워크 지연 고려)
       idle-timeout: 300000 # 5분
       max-lifetime: 900000 # 15분
@@ -17,14 +17,16 @@ spring:
       keepalive-time: 300000 # 연결 유지
       validation-timeout: 30000 # 검증 타임아웃
       connection-init-sql: 'SELECT 1'
-      # PostgreSQL SSL 설정 (더 유연하게)
+      # MariaDB SSL 설정
       data-source-properties:
-        ssl: true
-        sslmode: prefer
-        sslfactory: org.postgresql.ssl.NonValidatingFactory
+        useSSL: true
+        requireSSL: false
+        verifyServerCertificate: false
         # 연결 검증을 위한 추가 설정
         applicationName: chamggae-backend
         tcpKeepAlive: true
+        autoReconnect: true
+        maxReconnects: 3
 
 server:
   servlet:

@@ -24,6 +24,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,6 +46,7 @@ public class LoginController {
 
     private final KakaoLoginService kakaoLoginService;
     private final UserService userService;
+    private final Environment environment;
 
     @Value("${kakao.client-id}")
     private String clientId;
@@ -117,8 +119,12 @@ public class LoginController {
         // 받아온 refreshtoken을 쿠키로 보냄
         Cookie cookie = new Cookie("refreshToken", info.getRefreshToken());
         cookie.setHttpOnly(true);
-        cookie.setSecure(true);
+        cookie.setSecure(environment.acceptsProfiles("prod"));
         cookie.setPath("/");
+        // 프로덕션 환경에서는 도메인 설정
+        if (environment.acceptsProfiles("prod")) {
+            cookie.setDomain(".vercel.app");
+        }
         cookie.setMaxAge((int) (REFRESH_VALIDITY / 1000));
         servletResponse.addCookie(cookie);
 

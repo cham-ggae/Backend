@@ -18,6 +18,13 @@ public class DemoApplication {
 				.ignoreIfMissing() // 파일이 없어도 에러 발생하지 않음
 				.load();
 		
+		// Render 환경 감지 및 프로덕션 프로파일 강제 설정
+		String renderEnv = System.getenv("RENDER");
+		if (renderEnv != null || System.getenv("DATABASE_URL") != null) {
+			System.setProperty("spring.profiles.active", "prod");
+			System.setProperty("SPRING_PROFILES_ACTIVE", "prod");
+		}
+		
 		// 데이터베이스 설정
 		setSystemPropertyIfExists(dotenv, "DB_MARIA_PASSWORD");
 		setSystemPropertyIfExists(dotenv, "DB_MARIA_USERNAME");

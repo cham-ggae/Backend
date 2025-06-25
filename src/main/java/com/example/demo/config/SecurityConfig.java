@@ -91,6 +91,7 @@ public class SecurityConfig {
         if (isProd) {
             // 프로덕션 환경 - 백엔드 도메인과 개발용 localhost 모두 허용
             List<String> allowedOrigins = List.of(
+                "https://modi-peach.vercel.app",
                 "https://modi-backend-th1n.onrender.com",
                 "http://localhost:3000"
             );
@@ -106,13 +107,6 @@ public class SecurityConfig {
             config.setAllowedOrigins(allowedOrigins);
             log.info("Development CORS allowed origins: {}", allowedOrigins);
         }
-        
-        // 패턴 기반 Origin 허용 (보안상 필요한 경우에만)
-        config.setAllowedOriginPatterns(List.of(
-            "http://localhost:*",
-            "https://localhost:*",
-            "https://*.onrender.com"
-        ));
         
         // 모든 헤더 허용
         config.setAllowedHeaders(List.of("*"));

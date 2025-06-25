@@ -29,6 +29,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
             // 프로덕션 환경 - 모든 필요한 도메인 허용
             registry.addHandler(plantWebSocketHandler, "/ws/plant")
                     .setAllowedOrigins(
+                        "https://modi-peach.vercel.app",
                         "https://modi-backend-th1n.onrender.com",
                         "http://localhost:3000",
                         "https://localhost:3000"

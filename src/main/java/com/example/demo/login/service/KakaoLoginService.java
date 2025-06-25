@@ -11,7 +11,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -35,7 +34,6 @@ public class KakaoLoginService implements KakaoLogin {
     private final RestTemplate restTemplate;
     private final UserDao userDao;
     private final AuthenticationService authenticationService;
-    private final Environment environment;
 
     /** 카카오 API 클라이언트 ID (형상관리) */
     @Value("${kakao.client-id}")
@@ -92,11 +90,9 @@ public class KakaoLoginService implements KakaoLogin {
         );
 
         Map<String, Object> userInfo = userInfoResponse.getBody();
-        @SuppressWarnings("unchecked")
         Map<String, Object> kakaoAccount = (Map<String, Object>) userInfo.get("kakao_account");
         // 받아온 유저 정보들
         String email = (String) kakaoAccount.get("email");
-        @SuppressWarnings("unchecked")
         Map<String, Object> profileMap = (Map<String, Object>) kakaoAccount.get("profile");
 
         String nickname = null;
@@ -178,12 +174,8 @@ public class KakaoLoginService implements KakaoLogin {
             // 리프레시 토큰 쿠키 삭제
             Cookie tokenCookie = new Cookie("refreshToken", null);
             tokenCookie.setHttpOnly(true);
-            tokenCookie.setSecure(environment.acceptsProfiles("prod"));
+            tokenCookie.setSecure(true);
             tokenCookie.setPath("/");
-            // 프로덕션 환경에서는 도메인 설정
-            if (environment.acceptsProfiles("prod")) {
-                tokenCookie.setDomain(".vercel.app");
-            }
             tokenCookie.setMaxAge(0);
             response.addCookie(tokenCookie);
 
@@ -222,12 +214,8 @@ public class KakaoLoginService implements KakaoLogin {
             // 기존 쿠키 지우기
             Cookie deleteCookie = new Cookie("refreshToken", null);
             deleteCookie.setHttpOnly(true);
-            deleteCookie.setSecure(environment.acceptsProfiles("prod"));
+            deleteCookie.setSecure(true);
             deleteCookie.setPath("/");
-            // 프로덕션 환경에서는 도메인 설정
-            if (environment.acceptsProfiles("prod")) {
-                deleteCookie.setDomain(".vercel.app");
-            }
             deleteCookie.setMaxAge(0);
             response.addCookie(deleteCookie);
 
@@ -245,7 +233,7 @@ public class KakaoLoginService implements KakaoLogin {
         // 4) 새 refreshToken 쿠키로 교체
         Cookie refreshCookie = new Cookie("refreshToken", newRefreshToken);
         refreshCookie.setHttpOnly(true);
-        refreshCookie.setSecure(environment.acceptsProfiles("prod"));
+        refreshCookie.setSecure(true);
         refreshCookie.setPath("/");
         refreshCookie.setMaxAge((int)(REFRESH_VALIDITY / 1000)); // 14일
         response.addCookie(refreshCookie);

@@ -50,9 +50,8 @@ public class JwtProvider {
 
     /** 토큰에서 이메일(Subject) 추출 */
     public String getEmail(String token) {
-        return Jwts.parserBuilder()
+        return Jwts.parser()
                 .setSigningKey(getSigningKey())
-                .build()
                 .parseClaimsJws(token)
                 .getBody()
                 .getSubject();
@@ -61,10 +60,10 @@ public class JwtProvider {
     /** 토큰 유효성 검증 */
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token);
+            Jwts.parser().setSigningKey(getSigningKey()).parseClaimsJws(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
-    }
+
 }

@@ -8,10 +8,15 @@ import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.Components;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Swagger OpenAPI 3.0 설정 (JWT 인증 포함)
@@ -25,16 +30,33 @@ public class SwaggerConfig {
 
     private static final String SECURITY_SCHEME_NAME = "bearerAuth";
 
+    @Value("${server.port:8080}")
+    private String serverPort;
+
+    @Autowired
+    private Environment environment;
+
     /**
      * OpenAPI 3.0 설정 (JWT 인증 포함)
      */
     @Bean
     public OpenAPI customOpenAPI() {
+        List<Server> servers = new ArrayList<>();
+        
+        // 환경별 서버 URL 설정
+        boolean isProd = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+        
+        if (isProd) {
+            // 프로덕션 환경 - 실제 배포 URL
+            servers.add(new Server().url("https://modi-backend-th1n.onrender.com").description("프로덕션 서버"));
+        } else {
+            // 개발 환경
+            servers.add(new Server().url("http://localhost:" + serverPort).description("로컬 개발 서버"));
+        }
+        
         return new OpenAPI()
                 .info(apiInfo())
-                .servers(List.of(
-                        new Server().url("http://localhost:8090").description("로컬 개발 서버")
-                ))
+                .servers(servers)
                 .components(new Components()
                         .addSecuritySchemes(SECURITY_SCHEME_NAME, createAPIKeyScheme()))
                 .addSecurityItem(new SecurityRequirement().addList(SECURITY_SCHEME_NAME));

@@ -96,8 +96,7 @@ management:
 # CORS 설정 (필요시)
 cors:
   allowed-origins:
-    - 'https://your-frontend-domain.com'
-    - 'https://your-app.onrender.com'
+    - 'https://modi-backend-th1n.onrender.com'
     - 'http://localhost:3000'
   allowed-methods:
     - GET

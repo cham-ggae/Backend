@@ -2,8 +2,10 @@ package com.example.demo.config;
 
 import com.example.demo.provider.JwtFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -14,6 +16,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -21,6 +24,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtFilter jwtFilter;
+
+    @Autowired
+    private Environment environment;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -57,8 +63,9 @@ public class SecurityConfig {
         config.setAllowCredentials(true);
         
         // 환경별 허용 URL 설정
-        String activeProfile = System.getProperty("spring.profiles.active", "default");
-        if ("prod".equals(activeProfile)) {
+        boolean isProd = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+        
+        if (isProd) {
             // 프로덕션 환경
             config.setAllowedOrigins(List.of(
                 "https://modi-backend-th1n.onrender.com"
@@ -66,7 +73,9 @@ public class SecurityConfig {
         } else {
             // 개발 환경
             config.setAllowedOrigins(List.of(
-                "http://localhost:3000"
+                "http://localhost:3000",
+                "http://localhost:8080",
+                "http://localhost:8090"
             ));
         }
         

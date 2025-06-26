@@ -16,7 +16,7 @@ public class CreateFamilyCardRequest {
 
     /**
      * 이미지 타입 코드
-     * 가능한 값: "heart", "flower", "star"
+     * 가능한 값: "heart", "flower", "sparkle", "leaf", "star"
      */
     @NotBlank(message = "이미지 타입은 필수입니다.")
     private String imageType;

@@ -1,6 +1,7 @@
 package com.example.demo.familycard.controller;
 
 import com.example.demo.familycard.dto.*;
+import com.example.demo.familycard.enums.MessageCardImageType;
 import com.example.demo.familycard.service.FamilyCardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -14,8 +15,10 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 가족 메시지 카드 관련 REST API 컨트롤러
@@ -271,11 +274,9 @@ public class FamilyCardController {
     })
     public ResponseEntity<List<Map<String, String>>> getImageTypes() {
         try {
-            List<Map<String, String>> imageTypes = List.of(
-                    Map.of("code", "heart", "description", "하트"),
-                    Map.of("code", "flower", "description", "꽃"),
-                    Map.of("code", "star", "description", "별")
-            );
+            List<Map<String, String>> imageTypes = Arrays.stream(MessageCardImageType.values())
+                    .map(type -> Map.of("code", type.getCode(), "description", type.getDescription()))
+                    .collect(Collectors.toList());
 
             return ResponseEntity.ok(imageTypes);
 

@@ -2,19 +2,37 @@ services:
   - type: web
     name: chamggae-backend
     runtime: java
-    buildCommand: ./gradlew clean build -x test
-    startCommand: java -jar build/libs/chamggae.jar
+    buildCommand: ./gradlew clean bootJar -x test
+    startCommand: chmod +x start.sh && ./start.sh
     plan: free
     env: java17
     envVars:
-      - key: DB_PATH
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: PORT
+        value: 8080
+      - key: DATABASE_URL
+        sync: false
+      - key: DB_USERNAME
         sync: false
       - key: DB_PASSWORD
         sync: false
-      - key: PORT
-        value: 8080
-      - key: SPRING_PROFILES_ACTIVE
-        value: prod
+      - key: KAKAO
+        sync: false
+      - key: KAKAO_REDIRECT_URI
+        sync: false
+      - key: KAKAO_BROWSER_REDIRECT_URI
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        sync: false
+      - key: GOOGLE_CREDENTIALS_PATH
+        sync: false
+      - key: GOOGLE_BUCKET_NAME
+        sync: false
+      - key: jwtKey
+        sync: false
     healthCheckPath: /actuator/health
     disk:
       name: chamggae-disk

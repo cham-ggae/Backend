@@ -66,10 +66,12 @@ public class KakaoLoginService implements KakaoLogin {
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
 
-        ResponseEntity<Map> response = restTemplate.postForEntity(
+        @SuppressWarnings("unchecked")
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                 "https://kauth.kakao.com/oauth/token",
+                HttpMethod.POST,
                 request,
-                Map.class
+                (Class<Map<String, Object>>) (Class<?>) Map.class
         );
 
         //  카카오 인증 서버로부터 토큰 응답 수신
@@ -82,17 +84,21 @@ public class KakaoLoginService implements KakaoLogin {
         userInfoHeaders.setBearerAuth(kakaoAccessToken);
         HttpEntity<?> userInfoRequest = new HttpEntity<>(userInfoHeaders);
 
-        ResponseEntity<Map> userInfoResponse = restTemplate.exchange(
+        @SuppressWarnings("unchecked")
+        ResponseEntity<Map<String, Object>> userInfoResponse = restTemplate.exchange(
                 "https://kapi.kakao.com/v2/user/me",
                 HttpMethod.GET,
                 userInfoRequest,
-                Map.class
+                (Class<Map<String, Object>>) (Class<?>) Map.class
         );
 
+        @SuppressWarnings("unchecked")
         Map<String, Object> userInfo = userInfoResponse.getBody();
+        @SuppressWarnings("unchecked")
         Map<String, Object> kakaoAccount = (Map<String, Object>) userInfo.get("kakao_account");
         // 받아온 유저 정보들
         String email = (String) kakaoAccount.get("email");
+        @SuppressWarnings("unchecked")
         Map<String, Object> profileMap = (Map<String, Object>) kakaoAccount.get("profile");
 
         String nickname = null;
@@ -152,9 +158,12 @@ public class KakaoLoginService implements KakaoLogin {
                     headers.setBearerAuth(user.getKakao_accesstoken()); // 카카오 토큰 사용
 
                     HttpEntity<Void> request = new HttpEntity<>(headers);
-                    ResponseEntity<Map> kakaoResp = restTemplate.postForEntity(
+                    @SuppressWarnings("unchecked")
+                    ResponseEntity<Map<String, Object>> kakaoResp = restTemplate.exchange(
                             "https://kapi.kakao.com/v1/user/logout",
-                            request, Map.class
+                            HttpMethod.POST,
+                            request,
+                            (Class<Map<String, Object>>) (Class<?>) Map.class
                     );
 
                     Number idNum = (Number) kakaoResp.getBody().get("id");

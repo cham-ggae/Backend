@@ -4,51 +4,86 @@ import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import java.util.Objects;
-
 @SpringBootApplication
 public class DemoApplication {
 
 	public static void main(String[] args) {
-		Dotenv dotenv = Dotenv.configure().load();
-		
-		// 데이터베이스 설정
-		System.setProperty("DB_PASSWORD", Objects.requireNonNull(dotenv.get("DB_PASSWORD")));
-		System.setProperty("DB_PATH", Objects.requireNonNull(dotenv.get("DB_PATH")));
-		
+		// .env 파일이 존재하는 경우에만 로드 (로컬 개발용)
+		Dotenv dotenv = Dotenv.configure()
+				.ignoreIfMissing() // 파일이 없어도 에러 발생하지 않음
+				.load();
+
+		// Render 환경 감지 및 프로덕션 프로파일 강제 설정
+		String renderEnv = System.getenv("RENDER");
+		String databaseUrl = System.getenv("DATABASE_URL");
+
+		if (renderEnv != null || databaseUrl != null) {
+			System.setProperty("spring.profiles.active", "prod");
+			System.setProperty("SPRING_PROFILES_ACTIVE", "prod");
+			System.out.println("=== PRODUCTION MODE DETECTED ===");
+			System.out.println("Active Profile: prod");
+		} else {
+			System.out.println("=== LOCAL MODE DETECTED ===");
+			System.out.println("Active Profile: " + System.getProperty("spring.profiles.active", "local"));
+		}
+
+		// 환경변수 설정 (프로덕션 우선)
+		setEnvironmentVariable("DATABASE_URL", dotenv);
+		setEnvironmentVariable("DB_USERNAME", dotenv);
+		setEnvironmentVariable("DB_PASSWORD", dotenv);
+
+		// 로컬 환경 변수들
+		setEnvironmentVariable("DB_MARIA_PASSWORD", dotenv);
+		setEnvironmentVariable("DB_MARIA_USERNAME", dotenv);
+		setEnvironmentVariable("DB_PATH", dotenv);
+
 		// 서버 포트 설정
-		if (dotenv.get("PORT") != null) {
-			System.setProperty("PORT", dotenv.get("PORT"));
-		}
-		
+		setEnvironmentVariable("PORT", dotenv);
+
 		// 카카오 로그인 설정
-		if (dotenv.get("KAKAO") != null) {
-			System.setProperty("KAKAO", dotenv.get("KAKAO"));
-		}
-		if (dotenv.get("KAKAO_REDIRECT_URI") != null) {
-			System.setProperty("KAKAO_REDIRECT_URI", dotenv.get("KAKAO_REDIRECT_URI"));
-		}
-		if (dotenv.get("KAKAO_BROWSER_REDIRECT_URI") != null) {
-			System.setProperty("KAKAO_BROWSER_REDIRECT_URI", dotenv.get("KAKAO_BROWSER_REDIRECT_URI"));
-		}
-		
+		setEnvironmentVariable("KAKAO", dotenv);
+		setEnvironmentVariable("KAKAO_REDIRECT_URI", dotenv);
+		setEnvironmentVariable("KAKAO_BROWSER_REDIRECT_URI", dotenv);
+
 		// OpenAI 설정
-		if (dotenv.get("OPENAI_API_KEY") != null) {
-			System.setProperty("OPENAI_API_KEY", dotenv.get("OPENAI_API_KEY"));
-		}
-		if (dotenv.get("OPENAI_MODEL") != null) {
-			System.setProperty("OPENAI_MODEL", dotenv.get("OPENAI_MODEL"));
-		}
-		
+		setEnvironmentVariable("OPENAI_API_KEY", dotenv);
+		setEnvironmentVariable("OPENAI_MODEL", dotenv);
+
 		// Google Cloud 설정
-		if (dotenv.get("GOOGLE_CREDENTIALS_PATH") != null) {
-			System.setProperty("GOOGLE_CREDENTIALS_PATH", dotenv.get("GOOGLE_CREDENTIALS_PATH"));
-		}
-		if (dotenv.get("GOOGLE_BUCKET_NAME") != null) {
-			System.setProperty("GOOGLE_BUCKET_NAME", dotenv.get("GOOGLE_BUCKET_NAME"));
-		}
-		
+		setEnvironmentVariable("GOOGLE_CREDENTIALS_PATH", dotenv);
+		setEnvironmentVariable("GOOGLE_BUCKET_NAME", dotenv);
+
+		// JWT 설정
+		setEnvironmentVariable("jwtKey", dotenv);
+
+		// 시작 전 환경변수 확인
+		printEnvironmentInfo();
+
 		SpringApplication.run(DemoApplication.class, args);
 	}
 
+	private static void setEnvironmentVariable(String key, Dotenv dotenv) {
+		// 시스템 환경변수가 우선 (Render 환경)
+		String systemValue = System.getenv(key);
+		if (systemValue != null) {
+			System.setProperty(key, systemValue);
+			return;
+		}
+
+		// .env 파일에서 값 가져오기 (로컬 환경)
+		String dotenvValue = dotenv.get(key);
+		if (dotenvValue != null) {
+			System.setProperty(key, dotenvValue);
+		}
+	}
+
+	private static void printEnvironmentInfo() {
+		System.out.println("=== Environment Variables Check ===");
+		System.out.println("DATABASE_URL: " + (System.getenv("DATABASE_URL") != null ? "SET" : "NOT SET"));
+		System.out.println("DB_USERNAME: " + (System.getenv("DB_USERNAME") != null ? "SET" : "NOT SET"));
+		System.out.println("DB_PASSWORD: " + (System.getenv("DB_PASSWORD") != null ? "SET" : "NOT SET"));
+		System.out.println("SPRING_PROFILES_ACTIVE: " + System.getProperty("spring.profiles.active"));
+		System.out.println("PORT: " + System.getProperty("PORT", "8080"));
+		System.out.println("=====================================");
+	}
 }

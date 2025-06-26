@@ -1,6 +1,5 @@
 package com.example.demo.mypage.mapper;
 
-import com.example.demo.mypage.dto.MyPageResponse;
 import com.example.demo.mypage.dto.RecommendHistoryData;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;

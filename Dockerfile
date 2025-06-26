@@ -4,7 +4,7 @@ WORKDIR /app
 COPY build.gradle settings.gradle ./
 COPY gradle ./gradle
 COPY src ./src
-RUN gradle clean build -x test --no-daemon
+RUN gradle clean bootJar -x test --no-daemon
 
 # Runtime stage
 FROM openjdk:17-jdk-slim
